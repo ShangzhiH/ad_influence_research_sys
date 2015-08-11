@@ -129,7 +129,7 @@ shinyServer(
       
       
       Data = GetData()
-      browser()
+      
       x = Data$date
       y = unname(unlist(Data[input$Transformations]))
      
