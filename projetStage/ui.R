@@ -72,11 +72,12 @@ shinyUI(
                  fluidRow(
                    column(12,
                           uiOutput("param"),
+                          fluidRow(
                           column(6,
                             actionButton("bOK", label = "OK")),
                           column(6,
                             actionButton("bReset", label = "Reset"))
-                  )),
+                  ))),
                  fluidRow(
                     column(12,
                            selectInput("Memorisation", 
@@ -105,19 +106,20 @@ shinyUI(
                            fluidRow(
                              column(12,
                                     selectInput("Memorisation_Type", label = "Choisir la memorisation",
-                                                choices = list('Loess','Linear','LinearW'), selected = "Linear"))
+                                                choices = list('Loess','Linear','LinearW'), selected = "Linear"),
                              
-                           ),
+                           
                            fluidRow(
                              column(12,
                                     uiOutput("paramMemo"),
+                                    fluidRow(
                                     column(6,
                                            actionButton("MemoOK", label = "OK")),
                                     column(6,
                                            actionButton("MemoReset", label = "Reset"))
                                     
                              ))
-                    ))),
+                    )))))),
           
             column(10,
                    #includeHTML("C:/Users/Shangzhi.Huang/Documents/Projet/projetStage/test.html"),
@@ -161,8 +163,15 @@ shinyUI(
                                                          , "Nombre_inscription_Non_S"
                                                          , "Nombre_inscription"), selected = 'ConfigStarted'),
                               fluidRow(
-                                  column(12,
-                                         actionButton("calculate", label = "OK"))))))))),
+                                  column(12, 
+                                         selectInput("Modele_Statistique", label = h3(""), choices = list("GLM","GAM"), selected = "GLM"),
+                                  fluidRow(
+                                    column(12, 
+                                      uiOutput("ParamModel"))
+                                  ),
+                                  fluidRow(
+                                  column(2,
+                                         actionButton("calculate", label = "OK"))))))))))),
           column(9,tabsetPanel(tabPanel("Result Fitted", showOutput("resultchart", "highcharts")),
                                 tabPanel("Media Impact dans le modele", 
                                          fluidRow(
@@ -260,8 +269,9 @@ shinyUI(
                                               )),
                   tabPanel("Resultat final",
                            htmlOutput("PrecisionErrorFinal"),
-                           
-                             showOutput("Result_Final", "highcharts")
+                            fluidRow(
+                               column(5, showOutput("Result_Final", "highcharts")),
+                               column(5, showOutput("ModeleTS_Residu_Final", "highcharts")))
                             
                            ))))
                       

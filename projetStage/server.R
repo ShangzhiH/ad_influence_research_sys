@@ -129,7 +129,7 @@ shinyServer(
       
       
       Data = GetData()
-      
+      browser()
       x = Data$date
       y = unname(unlist(Data[input$Transformations]))
      
@@ -509,11 +509,25 @@ shinyServer(
     
     
 
+    output$ParamModel <- renderUI({
+      if(input$Modele_Statistique == 'GLM') {
+        list(h5("Modele lineaire generalise"),
+             selectInput("Family", label = "family", choices = list('gaussian','Gamma','poisson','quasi'), selected = 'gaussian')
+        )
+      }
+    })
     ## calculer le modele de regression
     AnalyseStatistique <- eventReactive(input$calculate, {
       
+          Famille = switch(input$Family,
+                           "gaussian" = gaussian(),
+                           "Gamma" = Gamma(),
+                           "poisson" = poisson(),
+                           "quasi" = quasi()
+          )
+        
           
-          Model = Stat_GLM(Data_Tempo$data, VarExplicativeInput(), VarReponseInput(), Famille = gaussian(), Intercept = TRUE, TypeSelect = 'forward', Critere = '')
+          Model = Stat_GLM(Data_Tempo$data, VarExplicativeInput(), VarReponseInput(), Famille = Famille, Intercept = TRUE, TypeSelect = 'forward', Critere = '')
           
           return(Model)
        
@@ -1399,6 +1413,33 @@ shinyServer(
         residu = as.numeric(unname(unlist(ResiduValue$data)) - unname(unlist(data$residuals)))
         h$series(name = 'Origine', data = residu, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
       
+        h$exporting(enabled=T)
+        return(h)
+      }
+      else {
+        return(Highcharts$new())
+      }
+    })
+    
+    output$ModeleTS_Residu_Final <- renderChart2({
+      if(!is.null(TS_Model_Table$data)) {
+        date = Data_Tempo$data$date
+        
+        data = TS_Model_Table$data
+        
+        h = Highcharts$new()
+        h$set(height=400, width=600)
+        h$chart(zoomType = 'x')
+        h$title(text = "residual")
+        
+        
+        
+        h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+        h$yAxis(title = list(text ='residual apres diff'))
+        
+        residu = as.numeric(unname(unlist(ResiduValue$data)) - unname(unlist(data$residuals)))
+        h$series(name = 'Origine', data = residu, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
+        
         h$exporting(enabled=T)
         return(h)
       }
