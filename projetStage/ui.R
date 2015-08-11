@@ -34,7 +34,8 @@ shinyUI(
           column(2,
                  selectInput("Transformations", 
                              label = "Choisir une variable a transformer",
-                             choices = list("Impressions_BRANDING"  
+                             choices = list("TTC_Gazole"
+                                            , "Impressions_BRANDING"  
                                             , "Impressions_ROI"                                 
                                             , "Clicks_BRANDING"   
                                             , "Clicks_ROI"                                      
@@ -82,7 +83,8 @@ shinyUI(
                     column(12,
                            selectInput("Memorisation", 
                                        label = "Choisir une variable a calculer sa memorisation",
-                                       choices = list("Impressions_BRANDING"  
+                                       choices = list("TTC_Gazole"
+                                                      , "Impressions_BRANDING"  
                                                       , "Impressions_ROI"                                 
                                                       , "Clicks_BRANDING"   
                                                       , "Clicks_ROI"                                      

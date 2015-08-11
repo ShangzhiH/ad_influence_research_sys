@@ -6,6 +6,7 @@ library(shiny)
 library(shinyjs)
 library(rCharts)
 library(DT)
+library(forecast)
 
 ## récupérer les données de la base de données
 GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet','Audi_Complet_Final')
@@ -24,7 +25,7 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet','Audi_Complet_Final'
   CONNEXTION <- odbcConnect(dsn = "Shangzhi",uid = 'ShHuang', pwd = 'a19910707B')
   on.exit(odbcClose(CONNEXTION))
   
-  SQuery = "SELECT a.AdvertiserName,a.date,a.DateYear,a.DateMonth,a.DateDay,a.NomJour,a.EstFerie,a.SpecificationJour,a.Impressions_BRANDING,a.Impressions_ROI,a.Clicks_BRANDING,a.Clicks_ROI,a.Budget_Depense_NON_Cappe_BRANDING,a.Budget_Depense_NON_Cappe_ROI,a.INTERNET_DISPLAY_InvestissementsEnEuros,a.PRESSE_InvestissementsEnEuros_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO,a.RADIO_InvestissementsEnEuros"
+  SQuery = "SELECT a.AdvertiserName,a.date,a.DateYear,a.DateMonth,a.DateDay,a.NomJour,a.EstFerie,a.SpecificationJour,a.TTC_Gazole, a.Impressions_BRANDING,a.Impressions_ROI,a.Clicks_BRANDING,a.Clicks_ROI,a.Budget_Depense_NON_Cappe_BRANDING,a.Budget_Depense_NON_Cappe_ROI,a.INTERNET_DISPLAY_InvestissementsEnEuros,a.PRESSE_InvestissementsEnEuros_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO,a.RADIO_InvestissementsEnEuros"
   SQuery = paste(SQuery, ",a.TV_NAT_InvestissementsEnEuros,a.TV_TNT_InvestissementsEnEuros")
   SQuery = paste(SQuery, ",(a.TV_NAT_InvestissementsEnEuros + a.TV_TNT_InvestissementsEnEuros) AS TV_InvestissementsEnEuros")
   
