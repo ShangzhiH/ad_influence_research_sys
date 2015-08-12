@@ -4,7 +4,7 @@ shinyServer(
     
     
     
-    ## recuperer les variables explicatives
+    ## recuperer les variables explicative
     VarExplicativeInput <- eventReactive(input$calculate, {
    
         return(input$var_explicative)
