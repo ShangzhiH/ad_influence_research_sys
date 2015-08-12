@@ -1,5 +1,5 @@
 getwd()
-setwd('C:/Users/Shangzhi.Huang/Documents/Projet/')
+setwd('C:/Users/Shangzhi.Huang/Documents/Projet/projetStage/')
 
 library(MASS)
 library(shiny)
@@ -11,7 +11,7 @@ library(forecast)
 ## récupérer les données de la base de données
 GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet','Audi_Complet_Final')
                               ,AdvertiserName = 'Audi', YearBegin = '2014', YearEnd = '2015') {
-  
+  function(){
   library(RODBC)
   
   get_data <- function(table) { 
@@ -71,6 +71,10 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet','Audi_Complet_Final'
   SQuery = paste(SQuery, Where, OrderBy,  sep = ' ')
   
   DataSet =  sqlQuery(CONNEXTION, paste(SQuery))
+  write.csv(DataSet, file = "Data_Audi.csv")
+  }
+  DataSet = read.csv("Data_Audi.csv")
+  return(DataSet)
 }
 
 
