@@ -244,14 +244,14 @@ shinyServer(
         #histgramOld$set(height = 300, width = 400)
         histgramOld$plotOptions(column = list(pointPadding=0,borderWidth=0,groupPadding=0,shadow=TRUE))
         histdata = hist(y, plot = FALSE)
-        
+        histgramOld$yAxis(list(list(title = list(text ="Counts")), list(title = list(text = "Normal distribution"), opposite = TRUE)))
         
         histgramOld$xAxis(categories = histdata$mids)
-        histgramOld$series(name = 'data before transform', data = histdata$density)
+        histgramOld$series(yAxis = 0, name = 'data before transform', data = histdata$counts)
         
          
         
-        histgramOld$series(color = '#F32525', enableMouseTracking = FALSE, dashStyle = 'shortdot',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = dnorm(histdata$mids, mean = mean(y), sd = sd(y)))
+        histgramOld$series(yAxis=1, color = '#F32525', enableMouseTracking = FALSE, dashStyle = 'shortdot',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = dnorm(histdata$mids, mean = mean(y), sd = sd(y)))
         histgramOld$exporting(enable=TRUE)
         return(histgramOld)
       }
@@ -283,10 +283,10 @@ shinyServer(
           histgramNew$plotOptions(column = list(pointPadding=0,borderWidth=0,groupPadding=0,shadow=TRUE))
           histdata = hist(y_t, plot = FALSE)
           
-          
+          histgramNew$yAxis(list(list(title = list(text ="Counts")), list(title = list(text = "Normal distribution"), opposite = TRUE)))
           histgramNew$xAxis(categories = histdata$mids)
-          histgramNew$series(name = 'data after transforme', data = histdata$density)
-          histgramNew$series(color = '#F32525', enableMouseTracking = FALSE, dashStyle = 'shortdot',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = dnorm(histdata$mids, mean = mean(y_t), sd = sd(y_t)))
+          histgramNew$series(yAxis=0, name = 'data after transforme', data = histdata$counts)
+          histgramNew$series(yAxis=1,color = '#F32525', enableMouseTracking = FALSE, dashStyle = 'shortdot',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = dnorm(histdata$mids, mean = mean(y_t), sd = sd(y_t)))
           histgramNew$exporting(enable=TRUE)
           return(histgramNew)
         }

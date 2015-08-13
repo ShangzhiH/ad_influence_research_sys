@@ -5,8 +5,8 @@ library(shiny)
 library(shinyjs)
 library(rCharts)
 library(DT)
-library(shinyapps)
-#library(forecast)
+#library(shinyapps)
+library(forecast)
 
 ## récupérer les données de la base de données
 GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet','Audi_Complet_Final')

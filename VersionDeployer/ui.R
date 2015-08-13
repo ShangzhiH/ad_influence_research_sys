@@ -31,7 +31,7 @@ shinyUI(
           
         
         fluidRow(
-          column(2,
+          column(3,
                  selectInput("Transformations", 
                              label = "Choose a variable to transform",
                              choices = list("TTC_Gazole"
@@ -62,7 +62,7 @@ shinyUI(
                                             , "UtileVisitor" 
                                             , "Nombre_inscription_S"
                                             , "Nombre_inscription_Non_S"
-                                            , "Nombre_inscription")),
+                                            , "Nombre_inscription"),width = '100%'),
                  fluidRow(
                    column(12,
                           selectInput("Transformation_Type", label = "Choose a transform function",
@@ -104,7 +104,7 @@ shinyUI(
                                                       , "TV_GRP"                              
                                                       , "MOBILE_Volume_Achete"
                                                       , "MOBILE_Net_Budget_LC"                            
-                                                      , "Investissement_Affichage")),
+                                                      , "Investissement_Affichage"),width = '100%'),
                            fluidRow(
                              column(12,
                                     selectInput("Memorisation_Type", label = "Choose a smoothing function",
@@ -123,7 +123,7 @@ shinyUI(
                              ))
                     )))))),
           
-            column(10,showOutput("Transformation_PLOT", "highcharts"),
+            column(9,showOutput("Transformation_PLOT", "highcharts"),
                             fluidRow(
                               
                               column(3,
