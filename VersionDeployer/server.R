@@ -1469,7 +1469,7 @@ shinyServer(
         hacf$xAxis(categories = data_acf$lag[,1,1], labels=list(align = 'left', enabled = TRUE))
         hacf$yAxis(title = list(text ='ACF value'), max = 1, min = -1)
         
-        hacf$series(name = '', data = unlist(data_acf$acf), color = '#F32525')
+        hacf$series(name = 'Residual', data = unlist(data_acf$acf), color = '#F32525')
         
         hacf$series(color = "#A5BFF2", enableMouseTracking = FALSE, dashStyle = 'shortdash',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = rep(2/sqrt(length(data)), length(unlist(data_acf$acf))))
         hacf$series(color = "#A5BFF2", enableMouseTracking = FALSE, dashStyle = 'shortdash',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = rep(-2/sqrt(length(data)), length(unlist(data_acf$acf))))
