@@ -9,75 +9,104 @@ library(DT)
 library(forecast)
 
 ## récupérer les données de la base de données
-GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet','Audi_Complet_Final')
-                              ,AdvertiserName = 'Audi', YearBegin = '2014', YearEnd = '2015') {
-  ss=function(){
-  library(RODBC)
+GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet_Final')
+                              ,AdvertiserName = 'Audi', ModeleVehicule = 'TOTAL', YearBegin = '2014', YearEnd = '2015') {
   
-  get_data <- function(table) { 
-    #cette fonction donne les noms de variables et leur contenu 
-    # d'un ficher importer.
-    name = colnames(table)
-    get_data = list(name = name, data = table[[1]])
-  }
-  
-  
-  CONNEXTION <- odbcConnect(dsn = "Shangzhi",uid = 'ShHuang', pwd = 'a19910707B')
-  on.exit(odbcClose(CONNEXTION))
-  
-  SQuery = "SELECT a.AdvertiserName,a.date,a.DateYear,a.DateMonth,a.DateDay,a.NomJour,a.EstFerie,a.SpecificationJour,a.TTC_Gazole, a.Impressions_BRANDING,a.Impressions_ROI,a.Clicks_BRANDING,a.Clicks_ROI,a.Budget_Depense_NON_Cappe_BRANDING,a.Budget_Depense_NON_Cappe_ROI,a.INTERNET_DISPLAY_InvestissementsEnEuros,a.PRESSE_InvestissementsEnEuros_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO,a.RADIO_InvestissementsEnEuros"
-  SQuery = paste(SQuery, ",a.TV_NAT_InvestissementsEnEuros,a.TV_TNT_InvestissementsEnEuros")
-  SQuery = paste(SQuery, ",(a.TV_NAT_InvestissementsEnEuros + a.TV_TNT_InvestissementsEnEuros) AS TV_InvestissementsEnEuros")
-  
-  
-  
-                 
-                 
-  SQuery = paste(SQuery, ",a.TV_NAT_GRP, a.TV_TNT_GRP")
-  SQuery = paste(SQuery, ",(a.TV_NAT_GRP + a.TV_TNT_GRP) AS TV_GRP")
-  
-  SQuery = paste(SQuery, ", a.MOBILE_Volume_Achete, a.MOBILE_Net_Budget_LC, a.Investissement_Affichage")
-  
- 
-  
-                  
-                 
-                 
-  SQuery = paste(SQuery, ",b.ConfigCompleted, b.ConfigStarted, b.UniqueVisitor, b.UtileVisitor")
-  
-  SQuery = paste(SQuery, ",b.Nombre_inscription_S, b.Nombre_inscription_Non_S")
-  SQuery = paste(SQuery, ",(b.Nombre_inscription_S + b.Nombre_inscription_Non_S) AS Nombre_inscription")
-  
-  
-  
-  
-  
-  
-                 
-  SQuery = paste(SQuery, " FROM DM_1259_GroupMFrance.projetStage.", TableName[1],'a',sep = ' ')
-  SQuery = paste(SQuery, " INNER JOIN DM_1259_GroupMFrance.projetStage.", TableName[2], 'b', sep = ' ')
-  SQuery = paste(SQuery, "ON (a.date = b.Date)")
-  
-  OrderBy = 'ORDER BY AdvertiserName, date'
-  
- 
-  
+    library(RODBC)
+    
+    get_data <- function(table) { 
+      #cette fonction donne les noms de variables et leur contenu 
+      # d'un ficher importer.
+      name = colnames(table)
+      get_data = list(name = name, data = table[[1]])
+    }
+    
+    
+    CONNEXTION <- odbcConnect(dsn = "Shangzhi",uid = 'ShHuang', pwd = 'a19910707B')
+    on.exit(odbcClose(CONNEXTION))
+    
+    if(ModeleVehicule != 'TOTAL') {
+      SQuery = "SELECT a.annonceur,a.modelevehicule, a.date,a.DateYear,a.DateMonth,a.DateDay,a.NomJour,a.EstFerie,a.SpecificationJour,a.TTC_Gazole, a.Impressions_BRANDING,a.Impressions_ROI,a.Clicks_BRANDING,a.Clicks_ROI,a.Budget_Depense_NON_Cappe_BRANDING,a.Budget_Depense_NON_Cappe_ROI,a.INTERNET_DISPLAY_InvestissementsEnEuros,a.PRESSE_InvestissementsEnEuros_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO,a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO,a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO,a.RADIO_InvestissementsEnEuros"
+      SQuery = paste(SQuery, ",a.TV_NAT_InvestissementsEnEuros,a.TV_TNT_InvestissementsEnEuros")
+      SQuery = paste(SQuery, ",(a.TV_NAT_InvestissementsEnEuros + a.TV_TNT_InvestissementsEnEuros) AS TV_InvestissementsEnEuros")
+
+      SQuery = paste(SQuery, ",a.TV_NAT_GRP, a.TV_TNT_GRP")
+      SQuery = paste(SQuery, ",(a.TV_NAT_GRP + a.TV_TNT_GRP) AS TV_GRP")
+    
+      SQuery = paste(SQuery, ", a.MOBILE_Volume_Achete, a.MOBILE_Net_Budget_LC, a.Investissement_Affichage")
+    
+      SQuery = paste(SQuery, ", a.INTERNET_DISPLAY_InvestissementsEnEuros_BMW") 
+      SQuery = paste(SQuery, ", a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_BMW, a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_BMW, a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_BMW, a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_BMW,a.RADIO_InvestissementsEnEuros_BMW,a.TV_NAT_InvestissementsEnEuros_BMW,a.TV_NAT_GRP_BMW,a.TV_TNT_InvestissementsEnEuros_BMW,a.TV_TNT_GRP_BMW,a.Investissement_Affichage_BMW")	
+      SQUERY = paste(SQuery, ", a.INTERNET_DISPLAY_InvestissementsEnEuros_MERCEDES, a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_MERCEDES, a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_MERCEDES, a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_MERCEDES, a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_MERCEDES, a.RADIO_InvestissementsEnEuros_MERCEDES, a.TV_NAT_InvestissementsEnEuros_MERCEDES, a.TV_NAT_GRP_MERCEDES, a.TV_TNT_InvestissementsEnEuros_MERCEDES, a.TV_TNT_GRP_MERCEDES, a.Investissement_Affichage_MERCEDES")
 
 
-  Where = paste("WHERE AdvertiserName = '", AdvertiserName, "'",sep = '') 
+      SQuery = paste(SQuery, ",b.Nombre_inscription_S, b.Nombre_inscription_Non_S")
+      SQuery = paste(SQuery, ",(b.Nombre_inscription_S + b.Nombre_inscription_Non_S) AS Nombre_inscription")
+    
+    
+      SQuery = paste(SQuery, " FROM DM_1259_GroupMFrance.projetStage.", TableName[1],'a',sep = ' ')
+      SQuery = paste(SQuery, " LEFT OUTER JOIN DM_1259_GroupMFrance.projetStage.", TableName[2], 'b', sep = ' ')
+      SQuery = paste(SQuery, "ON (a.date = b.Date and a.modelevehicule = b.modelevehicule)")
+    
+      OrderBy = 'ORDER BY annonceur, modelevehicule, date'
+    
+    
+      Where = paste("WHERE annonceur = '", AdvertiserName, "'",sep = '') 
+    
+      Where = paste(Where, "AND DateYear >=", YearBegin, "AND DateYear <= ",YearEnd, "AND a.modelevehicule = '", ModeleVehicule, "'", sep = '')
+    
+      SQuery = paste(SQuery, Where, OrderBy,  sep = ' ')
+      
+      DataSet =  sqlQuery(CONNEXTION, paste(SQuery))
+      DataSet[which(is.na(DataSet[,45])),45] = 0
+      DataSet[which(is.na(DataSet[,44])),44] = 0
+      DataSet[which(is.na(DataSet[,43])),43] = 0
+      
+
+      
+    }
+    else if(ModeleVehicule == 'TOTAL') {
+      SQuery = "SELECT a.annonceur,a.date,a.DateYear,a.DateMonth,a.DateDay,a.NomJour,a.EstFerie,a.SpecificationJour,a.TTC_Gazole, a.Impressions_BRANDING, a.Impressions_ROI, a.Clicks_BRANDING,a.Clicks_ROI,a.Budget_Depense_NON_Cappe_BRANDING,a.Budget_Depense_NON_Cappe_ROI, sum(a.INTERNET_DISPLAY_InvestissementsEnEuros) as INTERNET_DISPLAY_InvestissementsEnEuros, sum(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO) as PRESSE_InvestissementsEnEuros_QUOT_AUTO,sum(a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO) as PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO,sum(a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO) as PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO,sum(a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO) as PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO,sum(a.RADIO_InvestissementsEnEuros) as RADIO_InvestissementsEnEuros"
+      SQuery = paste(SQuery, ",sum(a.TV_NAT_InvestissementsEnEuros) as TV_NAT_InvestissementsEnEuros, sum(a.TV_TNT_InvestissementsEnEuros) as TV_TNT_InvestissementsEnEuros")
+      SQuery = paste(SQuery, ",sum(a.TV_NAT_InvestissementsEnEuros + a.TV_TNT_InvestissementsEnEuros) AS TV_InvestissementsEnEuros")
+      
+      SQuery = paste(SQuery, ",sum(a.TV_NAT_GRP) as TV_NAT_GRP, sum(a.TV_TNT_GRP) as TV_TNT_GRP")
+      SQuery = paste(SQuery, ",sum(a.TV_NAT_GRP + a.TV_TNT_GRP) AS TV_GRP")
+      
+      SQuery = paste(SQuery, ", avg(a.MOBILE_Volume_Achete) as MOBILE_Volume_Achete, avg(a.MOBILE_Net_Budget_LC) as MOBILE_Net_Budget_LC, sum(a.Investissement_Affichage) as Investissement_Affichage")
+      
+      SQuery = paste(SQuery, ", avg(a.INTERNET_DISPLAY_InvestissementsEnEuros_BMW) as INTERNET_DISPLAY_InvestissementsEnEuros_BMW") 
+      SQuery = paste(SQuery, ", avg(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_BMW) as PRESSE_InvestissementsEnEuros_QUOT_AUTO_BMW, avg(a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_BMW) as PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_BMW, avg(a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_BMW) as PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_BMW, avg(a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_BMW) as PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_BMW, avg(a.RADIO_InvestissementsEnEuros_BMW) as RADIO_InvestissementsEnEuros_BMW, avg(a.TV_NAT_InvestissementsEnEuros_BMW) as TV_NAT_InvestissementsEnEuros_BMW, avg(a.TV_NAT_GRP_BMW) as TV_NAT_GRP_BMW, avg(a.TV_TNT_InvestissementsEnEuros_BMW) as TV_TNT_InvestissementsEnEuros_BMW, avg(a.TV_TNT_GRP_BMW) as TV_TNT_GRP_BMW, avg(a.Investissement_Affichage_BMW) as Investissement_Affichage_BMW")	
+      SQuery = paste(SQuery, ", avg(a.INTERNET_DISPLAY_InvestissementsEnEuros_MERCEDES) as INTERNET_DISPLAY_InvestissementsEnEuros_MERCEDES, avg(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_MERCEDES) as PRESSE_InvestissementsEnEuros_QUOT_AUTO_MERCEDES, avg(a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_MERCEDES) as PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_MERCEDES, avg(a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_MERCEDES) as PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_MERCEDES, avg(a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_MERCEDES) as PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_MERCEDES, avg(a.RADIO_InvestissementsEnEuros_MERCEDES) as RADIO_InvestissementsEnEuros_MERCEDES, avg(a.TV_NAT_InvestissementsEnEuros_MERCEDES) as TV_NAT_InvestissementsEnEuros_MERCEDES, avg(a.TV_NAT_GRP_MERCEDES) as TV_NAT_GRP_MERCEDES, avg(a.TV_TNT_InvestissementsEnEuros_MERCEDES) as TV_TNT_InvestissementsEnEuros_MERCEDES, avg(a.TV_TNT_GRP_MERCEDES) as TV_TNT_GRP_MERCEDES, avg(a.Investissement_Affichage_MERCEDES) as Investissement_Affichage_MERCEDES")
+      
+      SQuery = paste(SQuery, ", avg(b.ConfigStarted) as ConfigStarted, avg(b.ConfigCompleted) as ConfigCompleted,avg(b.UniqueVisitor) as UniqueVisitor, avg(b.UtileVisitor) as UtileVisitor")
+      SQuery = paste(SQuery, ",sum(b.Nombre_inscription_S) as Nombre_inscription_S, sum(b.Nombre_inscription_Non_S) as Nombre_inscription_Non_S")
+      SQuery = paste(SQuery, ",sum(b.Nombre_inscription_S + b.Nombre_inscription_Non_S) AS Nombre_inscription")
+      
+      
+      SQuery = paste(SQuery, " FROM DM_1259_GroupMFrance.projetStage.", TableName[1],'a',sep = ' ')
+      SQuery = paste(SQuery, " LEFT OUTER JOIN DM_1259_GroupMFrance.projetStage.", TableName[2], 'b', sep = ' ')
+      SQuery = paste(SQuery, "ON (a.date = b.Date and a.modelevehicule = b.modelevehicule)")
+      
+      OrderBy = 'ORDER BY annonceur, date'
+      GroupBy = 'GROUP BY a.annonceur,a.date,a.DateYear,a.DateMonth,a.DateDay,a.NomJour,a.EstFerie,a.SpecificationJour,a.TTC_Gazole, a.Impressions_BRANDING, a.Impressions_ROI, a.Clicks_BRANDING,a.Clicks_ROI,a.Budget_Depense_NON_Cappe_BRANDING,a.Budget_Depense_NON_Cappe_ROI'
+      
+      Where = paste("WHERE annonceur = '", AdvertiserName, "'",sep = '') 
+      
+      Where = paste(Where, "AND DateYear >=", YearBegin, "AND DateYear <= ",YearEnd,  sep = '')
+      
+      SQuery = paste(SQuery, Where,GroupBy, OrderBy,  sep = ' ')
+      
+      DataSet =  sqlQuery(CONNEXTION, paste(SQuery))
+      
+    }
+      
+    #write.csv(DataSet, file = "Data_Audi.csv")
   
-  Where = paste(Where, "AND DateYear >=", YearBegin, "AND DateYear <= ",YearEnd)
- 
-  SQuery = paste(SQuery, Where, OrderBy,  sep = ' ')
   
-  DataSet =  sqlQuery(CONNEXTION, paste(SQuery))
-  
-  write.csv(DataSet, file = "Data_Audi.csv")
-  }
-  
-  DataSet = read.csv("Data_Audi.csv")
-  DataSet = DataSet[,-1]
-  DataSet$date = sapply(DataSet$date, as.Date)
+  #DataSet = read.csv("Data_Audi.csv")
+  #DataSet = DataSet[,-1]
+  #DataSet$date = sapply(DataSet$date, as.Date)
   
   return(DataSet)
 }
@@ -114,7 +143,7 @@ Stat_GLM <- function(DataSet, Explicatives, Reponses, Famille = gaussian(), Inte
   
   standardresidual = data.frame(matrix(ncol = length(Reponses), nrow = dim(reponse)[1]))
   names(standardresidual) = Reponses
- 
+  
   
   if(Intercept == TRUE) {
     intercept = ''
@@ -129,6 +158,7 @@ Stat_GLM <- function(DataSet, Explicatives, Reponses, Famille = gaussian(), Inte
   
   
   for(i in Reponses) {
+    
     model = glm(as.formula(paste(i,'~', intercept, paste(Explicatives, collapse = '+'), sep = '')), family = Famille, data = DataSet)
     
     if(Critere == 'AIC') {
@@ -174,7 +204,7 @@ Stat_GLM <- function(DataSet, Explicatives, Reponses, Famille = gaussian(), Inte
         }
       }
     }
-      
+    
   }
   
   
@@ -184,7 +214,7 @@ Stat_GLM <- function(DataSet, Explicatives, Reponses, Famille = gaussian(), Inte
 ## precision 
 Precision <- function(DataOriginal, DataModele) {
   
- 
+  
   return(mean(abs((DataModele[which(DataOriginal>0)] - DataOriginal[which(DataOriginal>0)])/DataOriginal[which(DataOriginal>0)])))
 }
 
@@ -206,37 +236,26 @@ Affichage_Ajuste <- function(Model) {
   h$series(name = 'Fitted value', color = '#F32525', data = Model$predict[,1],pointStart = as.numeric(x[1])*86400000, pointInterval=24 * 3600 * 1000)
   h$tooltip(shared = TRUE)
   
-
-
+  
+  
   return(h)
-          
+  
 }
 
 
 ## plot contribution des medias
 Affichage_Proportion <- function(Model) {
   
-  namelist = c("Impressions_BRANDING"  
-               , "Impressions_ROI"                                 
-               , "Clicks_BRANDING"   
-               , "Clicks_ROI"                                      
-               , "Budget_Depense_NON_Cappe_BRANDING" 
-               , "Budget_Depense_NON_Cappe_ROI"                   
-               , "INTERNET_DISPLAY_InvestissementsEnEuros" 
-               , "PRESSE_InvestissementsEnEuros_QUOT_AUTO"        
-               , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO"  
-               , "PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO"    
-               , "PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO"
-               , "RADIO_InvestissementsEnEuros"                   
-               , "TV_NAT_InvestissementsEnEuros"
-               , "TV_TNT_InvestissementsEnEuros" 
-               , "TV_InvestissementsEnEuros"
-               , "TV_NAT_GRP"                                    
-               , "TV_TNT_GRP"
-               , "TV_GRP"                              
-               , "MOBILE_Volume_Achete"
-               , "MOBILE_Net_Budget_LC"                            
-               , "Investissement_Affichage")
+  namelist = c("annonceur"
+               , "modelevehicule"
+               , "date"
+               , "DateYear"
+               , "DateMonth"
+               , "semaine"
+               , "DateDay"
+               , "NomJour"
+               , "EstFerie"
+               , "SpecificationJour")
   x = Model$input$date
   
   h1 = Highcharts$new()
@@ -282,7 +301,7 @@ Affichage_Proportion <- function(Model) {
   }
   
   for(i in names(Model$explicative)) {
-    if(i %in% namelist) {
+    if(!(i %in% namelist)) {
       h$series(name = i, data = unname(unlist(Model$explicative[i])*Model$coeff[which(names(Model$explicative) == i)+intercept,])[order(Model$predict[,1])])
       h1$series(yAxis = 0, name = i, data = unname(unlist(Model$explicative[i])*Model$coeff[which(names(Model$explicative) == i)+intercept,]),pointStart = as.numeric(x[1])*86400000, pointInterval=24 * 3600 * 1000)
     }
@@ -306,20 +325,20 @@ Affichage_Proportion <- function(Model) {
 
 
 DEMO <- function(Tendance = FALSE) {
-
-## Données
-Data_Stat = GET_DATA_FROM_BBD(TableName = c('Table_Complet','Audi_Complet_Final')
-                             ,AdvertiserName = 'Audi', YearBegin = '2014', YearEnd = '2015')
-name = names(Data_Stat)
-## Matrice de corrélation
-Corr = cor(Data_Stat[,c(-1,-2,-3,-4,-5)])
-Corr
-plot(Data_Stat[,c(-1,-2,-3,-4,-5)])
-
-Reponses = name[29]
-output = Stat_GLM(Data_Stat, Explicatives = c(name[c(seq(6,26,1))]), Critere = 'AIC',  Intercept = TRUE, TypeSelect = 'both', Reponses = Reponses, Famille = gaussian())
-summary(output$model)  
-plot(output$input$date, t(output$input[Reponses]), type = 'l')
+  
+  ## Données
+  Data_Stat = GET_DATA_FROM_BBD(TableName = c('Table_Complet','Audi_Complet_Final')
+                                ,AdvertiserName = 'Audi', YearBegin = '2014', YearEnd = '2015')
+  name = names(Data_Stat)
+  ## Matrice de corrélation
+  Corr = cor(Data_Stat[,c(-1,-2,-3,-4,-5)])
+  Corr
+  plot(Data_Stat[,c(-1,-2,-3,-4,-5)])
+  
+  Reponses = name[29]
+  output = Stat_GLM(Data_Stat, Explicatives = c(name[c(seq(6,26,1))]), Critere = 'AIC',  Intercept = TRUE, TypeSelect = 'both', Reponses = Reponses, Famille = gaussian())
+  summary(output$model)  
+  plot(output$input$date, t(output$input[Reponses]), type = 'l')
   lines(output$input$date, t(output$predict[Reponses]), col ='red')
   text =paste("Precision(Data_Stat$",Reponses,", t(output$predict[Reponses]))", sep = '')
   eval(parse(text = text))

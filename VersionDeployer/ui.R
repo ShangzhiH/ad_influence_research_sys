@@ -14,9 +14,20 @@ shinyUI(
         fluidRow(
           column(2,
                  selectInput("Marque", 
-                             label = "Choose a brand name",
-                             choices = list("Audi"),
-                             selected = "Audi")),
+                             label = "Choose a model",
+                             choices = list("TOTAL"
+                                            ,"Audi S1"
+                                            ,"Audi S3"
+                                            ,"Audi Q7"
+                                            ,"Audi TT"
+                                            ,"Audi A6"
+                                            ,"Audi A5"
+                                            ,"Audi Q5"
+                                            ,"Audi A4"
+                                            ,"Audi Q3"
+                                            ,"Audi A1"
+                                            ,"Audi A3"),
+                             selected = "TOTAL")),
           column(2,
                  sliderInput("Annee", label = "Year", step = 1, min = 2014, max = 2015, value = c(2014,2015)))
         ),
@@ -56,6 +67,35 @@ shinyUI(
                                             , "MOBILE_Volume_Achete"
                                             , "MOBILE_Net_Budget_LC"                            
                                             , "Investissement_Affichage"
+                                            
+                                            , "INTERNET_DISPLAY_InvestissementsEnEuros_BMW" 
+                                            , "PRESSE_InvestissementsEnEuros_QUOT_AUTO_BMW"        
+                                            , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_BMW"  
+                                            , "PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_BMW"    
+                                            , "PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_BMW"
+                                            , "RADIO_InvestissementsEnEuros_BMW"                   
+                                            , "TV_NAT_InvestissementsEnEuros_BMW"
+                                            , "TV_TNT_InvestissementsEnEuros_BMW" 
+                                            , "TV_InvestissementsEnEuros_BMW"
+                                            , "TV_NAT_GRP_BMW"                                    
+                                            , "TV_TNT_GRP_BMW"
+                                            , "TV_GRP_BMW"                              
+                                            , "Investissement_Affichage_BMW"
+                                            
+                                            , "INTERNET_DISPLAY_InvestissementsEnEuros_MERCEDES" 
+                                            , "PRESSE_InvestissementsEnEuros_QUOT_AUTO_MERCEDES"        
+                                            , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_MERCEDES"  
+                                            , "PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_MERCEDES"    
+                                            , "PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_MERCEDES"
+                                            , "RADIO_InvestissementsEnEuros_MERCEDES"                   
+                                            , "TV_NAT_InvestissementsEnEuros_MERCEDES"
+                                            , "TV_TNT_InvestissementsEnEuros_MERCEDES" 
+                                            , "TV_InvestissementsEnEuros_MERCEDES"
+                                            , "TV_NAT_GRP_MERCEDES"                                    
+                                            , "TV_TNT_GRP_MERCEDES"
+                                            , "TV_GRP_MERCEDES"                              
+                                            , "Investissement_Affichage_MERCEDES"
+                                            
                                             , "ConfigStarted"
                                             , "ConfigCompleted"                               
                                             , "UniqueVisitor"                                  
@@ -154,13 +194,8 @@ shinyUI(
                         column(12, h3("Choose the dependent variable")),
                           fluidRow(
                             column(12,
-                              radioButtons("var_reponse", label = h3(""), choices = list("ConfigStarted"
-                                                         , "ConfigCompleted"                               
-                                                         , "UniqueVisitor"                                  
-                                                         , "UtileVisitor"
-                                                         , "Nombre_inscription_S"
-                                                         , "Nombre_inscription_Non_S"
-                                                         , "Nombre_inscription"), selected = 'ConfigStarted'),
+                              
+                              uiOutput('VariableReponseGenere'),
                               fluidRow(
                                   column(12, 
                                          selectInput("Modele_Statistique", label = h3(""), choices = list("GLM","GAM"), selected = "GLM"),

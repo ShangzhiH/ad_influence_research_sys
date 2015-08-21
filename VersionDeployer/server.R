@@ -4,7 +4,7 @@ shinyServer(
     
     
     
-    ## recuperer les variables explicatives
+    ## to get the name of chosen independent variable 
     VarExplicativeInput <- eventReactive(input$calculate, {
    
         return(input$var_explicative)
@@ -12,22 +12,23 @@ shinyServer(
     })
     
     
-    ## recuperer la variable reponse
+    ## to get the name of chosen dependent variable
     VarReponseInput <- eventReactive(input$calculate, { 
 
         return(input$var_reponse)
     })
     
+    ## this is a variable to stock the intermediat data
     Data_Tempo <- reactiveValues(data = NULL)
     
     
-    ## recupere les donnees de la base de donnees
+    ## get the original data from the data base
     GetData <- eventReactive(input$Extract,{
 
 
 
-        Data = GET_DATA_FROM_BBD(TableName = c('Table_Complet','Audi_Complet_Final')
-                          ,AdvertiserName = input$Marque, YearBegin = input$Annee[1], YearEnd = input$Annee[2])
+        Data = GET_DATA_FROM_BBD(TableName = c('Table_Complet_Modele','Audi_Complet_Final')
+                          ,AdvertiserName = 'AUDI', ModeleVehicule = input$Marque, YearBegin = input$Annee[1], YearEnd = input$Annee[2])
         
         l = dim(Data)[1]
         
@@ -37,11 +38,61 @@ shinyServer(
         Data$DateDay = as.factor(Data$DateDay)
         Data$DateYear = as.factor(Data$DateYear)
         
+        Data["IsMondialAuto2014"] = 0
+        Data["IsMondialAuto2014"][which(as.character(Data$DateMonth) == "10" & as.character(Data$DateYear) == "2014" & as.numeric(Data$DateDay) <= 19 & as.numeric(Data$DateDay) >= 4),] = 1
+        
+        Data["IsOPO"] = 0
         
         
-        if(is.null(Data_Tempo$data)) {
-          Data_Tempo$data = Data
+          
+        for(i in c('2014-01-18'
+                    ,'2014-01-19'
+                    ,'2014-03-15'
+                    ,'2014-03-16'
+                    ,'2014-06-14'
+                    ,'2014-06-15'
+                    ,'2014-09-13'
+                    ,'2014-09-14'
+                    ,'2014-10-11'
+                    ,'2014-10-12'
+                    ,'2014-11-21'
+                    ,'2014-11-22'
+                    ,'2014-11-23'
+                    ,'2015-01-17'
+                    ,'2015-01-18'
+                    ,'2015-03-14'
+                    ,'2015-03-15'
+                    ,'2015-06-13'
+                    ,'2015-06-14')) {
+          Data["IsOPO"][which(Data$date == i),] = 1
+          
         }
+           
+           
+      
+        
+        Data["IsPrimeAlaCasse"] = 0
+        Data["IsPrimeAlaCasse"][which(Data$date == '2014-12-30' | Data$date == '2015-04-02'),] = 1
+        
+        
+        holiday = unique(as.character(Data$SpecificationJour))
+        
+        for(i in holiday) {
+          if(i != "Jour Ordinaire") {
+            j = gsub(" ","",i)
+            j = gsub("'","",j)
+            j = paste("Is", j,sep = '')
+            Data[j] = 0
+            Data[j][which(as.character(Data$SpecificationJour) == i),] = 1
+          }
+        }
+        
+        
+        
+        
+        
+        Data_Tempo$data = Data
+        
         
       
         return(Data)
@@ -49,7 +100,7 @@ shinyServer(
     })
     
     
-    ## si les donnees sont bien recuperees
+    ## to see if the data is extracted correctly
     output$Success <- renderText({
       if(input$Extract == 0) {
         
@@ -64,7 +115,7 @@ shinyServer(
     })
     
     
-    ## l'affichage des choix des modeles de transformations
+    ## display the tranform model
     output$param <- renderUI({
       
       
@@ -109,7 +160,7 @@ shinyServer(
     })
     
     
-    ## si la transformation est comfirmee
+    ## get its parameter if the model is confirmedn, the transformed data is stocked in 'Data_Tempo'
     IsOK <- observeEvent(input$bOK, {
       param = NULL
       tryCatch({
@@ -124,8 +175,6 @@ shinyServer(
       tryCatch({
         param = c(param, input$Param4)
       }, error = function(e){param = c(param, NULL)})
-      
-      
       
       
       Data = GetData()
@@ -145,7 +194,7 @@ shinyServer(
     })
     
     
-    ## reset la transformation ou pas
+    ## cancel the transform, the Data_Tempo is changed to be same as the original data
     IsReset <- observeEvent(input$bReset, {
       
       
@@ -156,7 +205,7 @@ shinyServer(
       
     })
     
-    
+    ## if the data is not extracted, disable the button
     observe({
       if (input$Extract == 0) {
         shinyjs::disable("bOK")
@@ -181,7 +230,7 @@ shinyServer(
 
 
     
-    ## afficher le plot pour les donnees transformees
+    ## display the transformed data
     output$Transformation_PLOT <- renderChart2({
       tryCatch({if(input$bOK == 0){
         
@@ -222,7 +271,7 @@ shinyServer(
     },error = function(e) {return(Highcharts$new())})
     })
     
-    ## histo avant la transformation
+    ## histo of the original data
     output$hist1 <- renderChart2({
       tryCatch({if(input$bOK == 0){
         
@@ -260,7 +309,7 @@ shinyServer(
     })
     
     
-    ## histo apres la transformation
+    ## histo of the transformed data
     output$hist2 <- renderChart2({
       tryCatch({if(input$bOK == 0){
         
@@ -295,7 +344,7 @@ shinyServer(
     })
     
     
-    ## si la memorisation est comfirmee
+    ## display the memorisation model
     output$paramMemo <- renderUI({
       
       
@@ -321,6 +370,7 @@ shinyServer(
       
     })
     
+    ## if the data is not extracted, then disable the button
     observe({
       if (input$Extract == 0) {
         shinyjs::disable("MemoOK")
@@ -331,6 +381,7 @@ shinyServer(
       }
     })
     
+    ## calculate the memory effect 
     IsMemoOK <- observeEvent(input$MemoOK, {
       param = NULL
       tryCatch({
@@ -361,7 +412,7 @@ shinyServer(
     })
     
     
-    ## reset la transformation ou pas
+    ## cancel the memory
     IsMemoReset <- observeEvent(input$MemoReset, {
 
       string = paste(input$Memorisation, 'Memo', sep = '')
@@ -370,7 +421,7 @@ shinyServer(
       
     })
     
-    
+    ## display the memory
     output$Memorisation_PLOT <- renderChart2({
       tryCatch({if(input$MemoOK == 0){
         
@@ -410,7 +461,7 @@ shinyServer(
       },error = function(e) {return(Highcharts$new())})
     })
     
-    
+    ## get all variable name of Data_Tempo
     varnumber <- reactive({
       if(input$MemoOK != 0 || input$Extract != 0) {
         name = names(Data_Tempo$data)
@@ -418,66 +469,17 @@ shinyServer(
       }
     })
     
-    ## generer les variables explicatives a choisir
     
+    ## generate the choosing independent variable part
     output$VariableGenere <- renderUI({
       tryCatch({
       name = varnumber()
-      possiblename = c("DateYear"                                        
-                       , "DateMonth"                                       
-                       , "DateDay"
-                       , "JourNormalise"
-                       , "NomJour"
-                       , "EstFerie"                                         
-                       , "SpecificationJour"  
-                       , "TTC_Gazole"
-                       , "Impressions_BRANDING"  
-                       , "Impressions_ROI"                                 
-                       , "Clicks_BRANDING"   
-                       , "Clicks_ROI"                                      
-                       , "Budget_Depense_NON_Cappe_BRANDING" 
-                       , "Budget_Depense_NON_Cappe_ROI"                   
-                       , "INTERNET_DISPLAY_InvestissementsEnEuros" 
-                       , "PRESSE_InvestissementsEnEuros_QUOT_AUTO"        
-                       , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO"  
-                       , "PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO"    
-                       , "PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO"
-                       , "RADIO_InvestissementsEnEuros"                   
-                       , "TV_NAT_InvestissementsEnEuros"                    
-                       , "TV_NAT_GRP"                                    
-                       , "TV_TNT_InvestissementsEnEuros" 
-                       , "TV_TNT_GRP"
-                       , "TV_InvestissementsEnEuros"
-                       , "TV_GRP"
-                       , "MOBILE_Volume_Achete"
-                       , "MOBILE_Net_Budget_LC"                            
-                       , "Investissement_Affichage"
-                       , "TTC_GazoleMemo"
-                       , "Impressions_BRANDINGMemo"  
-                       , "Impressions_ROIMemo"                                 
-                       , "Clicks_BRANDINGMemo"   
-                       , "Clicks_ROIMemo"                                      
-                       , "Budget_Depense_NON_Cappe_BRANDINGMemo" 
-                       , "Budget_Depense_NON_Cappe_ROIMemo"                   
-                       , "INTERNET_DISPLAY_InvestissementsEnEurosMemo" 
-                       , "PRESSE_InvestissementsEnEuros_QUOT_AUTOMemo"        
-                       , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTOMemo"  
-                       , "PRESSE_InvestissementsEnEuros_QUOT_NON_AUTOMemo"    
-                       , "PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTOMemo"
-                       , "RADIO_InvestissementsEnEurosMemo"                   
-                       , "TV_NAT_InvestissementsEnEurosMemo"                    
-                       , "TV_NAT_GRPMemo"                                    
-                       , "TV_TNT_InvestissementsEnEurosMemo" 
-                       , "TV_TNT_GRPMemo"
-                       , "TV_InvestissementsEnEurosMemo"
-                       , "TV_GRPMemo"
-                       , "MOBILE_Volume_AcheteMemo"
-                       , "MOBILE_Net_Budget_LCMemo"                            
-                       , "Investissement_AffichageMemo")
+      
+      
       script = "choices = list("
       for(i in name) {
-        if(i %in% possiblename) {
-          script = paste(script,"'", i,"'", ",", sep = '')
+        if(!(i %in% c("annonceur","modelevehicule","date","ConfigCompleted","ConfigStarted","UniqueVisitor","UtileVisitor","Nombre_inscription_S","Nombre_inscription_Non_S","Nombre_inscription"))) {
+          script = paste(script,'"', i,'"', ",", sep = '')
         }
       }
       script = paste(substr(script, 1, nchar(script) - 1), ')')
@@ -486,31 +488,51 @@ shinyServer(
       checkboxGroupInput("var_explicative", 
                          label = h3(""), 
                          choices = choices, selected = c(                                   
-                                                                                      "SpecificationJour"                               
+                                                                                     "TTC_Gazole"                                
                                                                                     , "Impressions_BRANDING"  
                                                                                     , "Impressions_ROI"                                 
                                                                                                                        
-                                                                                    , "Budget_Depense_NON_Cappe_BRANDING" 
-                                                                                    , "Budget_Depense_NON_Cappe_ROI"                   
+                                                                                                     
                                                                                     , "INTERNET_DISPLAY_InvestissementsEnEuros" 
                                                                                     , "PRESSE_InvestissementsEnEuros_QUOT_AUTO"        
                                                                                     , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO"  
-                                                                                    , "PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO"    
-                                                                                    , "PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO"
+                                                                                 
                                                                                     , "RADIO_InvestissementsEnEuros"                   
-                                                                                    , "TV_NAT_InvestissementsEnEuros"                    
-                                                                                    , "TV_NAT_GRP"                                    
-                                                                                    , "TV_TNT_InvestissementsEnEuros" 
-                                                                                    , "TV_TNT_GRP"                                      
-                                                                                    , "MOBILE_Volume_Achete"
+                                                                                    , "TV_InvestissementsEnEuros"                    
+                                                                                                                      
+                                                                                    
+                                                                                                                       
+                                                                               
                                                                                     , "MOBILE_Net_Budget_LC"                            
                                                                                     , "Investissement_Affichage"))},error = function(e){})
       
     })
     
+    ## generate the choosing dependent variable part
+    output$VariableReponseGenere <- renderUI({
+      tryCatch({
+        name = varnumber()
+        
+        
+        script = "choices = list("
+        for(i in name) {
+          if(i %in% c("ConfigStarted","ConfigCompleted","UniqueVisitor","UtileVisitor","Nombre_inscription_S","Nombre_inscription_Non_S","Nombre_inscription")) {
+            script = paste(script,"'", i,"'", ",", sep = '')
+          
+          }
+        }
+        script = paste(substr(script, 1, nchar(script) - 1), ')')
+        eval(parse(text = script))
+        
+        radioButtons("var_reponse", 
+                           label = h3(""), 
+                           choices = choices, selected = choices[1])},error = function(e){})
+      
+    })
     
     
-
+    
+    ## display the regression model
     output$ParamModel <- renderUI({
       if(input$Modele_Statistique == 'GLM') {
         list(h5("Generalized linear model"),
@@ -518,7 +540,8 @@ shinyServer(
         )
       }
     })
-    ## calculer le modele de regression
+    
+    ## caculate the regression model
     AnalyseStatistique <- eventReactive(input$calculate, {
       
           Famille = switch(input$Family,
@@ -533,11 +556,10 @@ shinyServer(
           
           return(Model)
        
-      
     })
     
     
-    ## plot entre la reponse ajustee et la reponse d'origine 
+    ## plot between the fitted value and original value 
     output$resultchart <- renderChart2({ 
       
       
@@ -551,7 +573,7 @@ shinyServer(
       
     })
     
-    ## contribution des media
+    ## contribution of different media
     output$proportionchart <- renderChart2({
       
       if(!is.null(AnalyseStatistique())) {
@@ -562,7 +584,7 @@ shinyServer(
       
     })
     
-    ## contribution des media par date
+    ## daily contribution of media 
     output$proportionchartParDate <- renderChart2({
       
       if(!is.null(AnalyseStatistique())) {
@@ -575,7 +597,7 @@ shinyServer(
     
     
     
-    ## siginification des regresseurs
+    ## siginification of regressors
     output$summary_table1 <- DT::renderDataTable({
       
       
@@ -643,7 +665,7 @@ shinyServer(
     
     
     
-    ## table de la correlation
+    ## table of correlation
     output$correlation_table <- DT::renderDataTable({
       
       
@@ -679,13 +701,13 @@ shinyServer(
       }
     )
     
-    ## wiget pour telecharger la table
+    ## widget to download the table
     output$download_tableCorr <- renderUI({
       
       downloadButton('downloadtable2', 'Download')
     })
     
-    ## calculer la precision et la valeur de R2
+    ## calculate the precision and the R2 value
     output$PrecisionError <- renderText({
       model = AnalyseStatistique()
       
@@ -704,7 +726,7 @@ shinyServer(
     })
     
     
-    ## plot de diagnostic residu vs predict
+    ## plot of diagnostic residu vs predict
     output$Diagnostic1 <- renderChart2({
       
    
@@ -741,7 +763,7 @@ shinyServer(
       }
     })
     
-    ## plot de diagnostic residuStd vs predict
+    ## plot of diagnostic residuStd vs predict
     output$Diagnostic2 <- renderChart2({
       
       
@@ -777,7 +799,7 @@ shinyServer(
       }
     }) 
     
-    ## plot de diagnostic QQplot
+    ## plot of diagnostic QQplot
     output$Diagnostic3 <- renderChart2({
       
       
@@ -823,7 +845,7 @@ shinyServer(
     })
     
     
-    ## plot de diagnostic residu vs date
+    ## plot of diagnostic residu vs date
     output$Diagnostic4 <- renderChart2({
       
       
@@ -855,7 +877,7 @@ shinyServer(
     })
     
     
-    ## datatable a exploiter et telecharger
+    ## datatable to explorer and download
     output$data_table <- renderDataTable({
       Data_Tempo$data
       
@@ -868,7 +890,7 @@ shinyServer(
       }
     )
     
-    ## wiget pour telecharger la table
+    ## widget to download the table
     output$download_table <- renderUI({
       
       downloadButton('downloadtable', 'Download')
@@ -884,17 +906,21 @@ shinyServer(
     
     
     
-    
+    ## this is intermediate variable to stock the residus
     ResiduValue <- reactiveValues(data = NULL) 
+    
+    ## this is transformed residual
     ResiduApresTransformation <- reactiveValues(data = NULL)
     
     
+    ## extract the residual
     observeEvent(input$GetResidu, {
        
         
         ResiduValue$data = AnalyseStatistique()$residual
       })
     
+    ## get the residual
     output$ResiduSuccess <- renderText({
       if(input$GetResidu == 0) {
         
@@ -1527,7 +1553,7 @@ shinyServer(
     
     output$ModeleTS_Residu_LjungBox <- renderChart2({
       if(!is.null(TS_Model_Table$data)) {
-        
+       
         data = as.numeric(unname(unlist(ResiduValue$data) - TS_Model_Table$data$residuals))
         pvalue = numeric(50)
         for(i in c(1:50)) {
