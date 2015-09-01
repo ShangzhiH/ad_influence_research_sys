@@ -24,7 +24,7 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
       get_data = list(name = name, data = table[[1]])
     }
     
-    
+    function(){
     CONNEXTION <- odbcConnect(dsn = "Shangzhi",uid = 'ShHuang', pwd = 'a19910707B')
     on.exit(odbcClose(CONNEXTION))
     
@@ -109,14 +109,14 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
       DataSet =  sqlQuery(CONNEXTION, paste(SQuery))
       
       
-    }
+    }}
       
     #write.csv(DataSet, file = "Data_Audi.csv")
   
   
-  #DataSet = read.csv("Data_Audi.csv")
-  #DataSet = DataSet[,-1]
-  #DataSet$date = sapply(DataSet$date, as.Date)
+  DataSet = read.csv("Data_Audi.csv")
+  DataSet = DataSet[,-1]
+  
   
   return(DataSet)
 }
