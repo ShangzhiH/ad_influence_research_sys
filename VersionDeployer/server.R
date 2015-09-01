@@ -29,72 +29,18 @@ shinyServer(
 
         Data = GET_DATA_FROM_BBD(TableName = c('Table_Complet_Modele','Audi_Complet_Final')
                           ,AdvertiserName = 'AUDI', ModeleVehicule = input$Marque, YearBegin = input$Annee[1], YearEnd = input$Annee[2])
+       
+        Data$ConfigCompleted = filter(unname(unlist(Data$ConfigCompleted)), rep(1/4, 4), method = "convolution", sides = 2)
+        Data$ConfigCompletednew = filter(unname(unlist(Data$ConfigCompleted)), rep(1/4, 4), method = "convolution", sides = 2)
         
-        l = dim(Data)[1]
-        
-        Data$JourNormalise = (c(0:(l-1))%%365+1)/365
-        
-        Data$DateMonth = as.factor(Data$DateMonth)
-        Data$DateDay = as.factor(Data$DateDay)
-        Data$DateYear = as.factor(Data$DateYear)
-        
-        Data["IsMondialAuto2014"] = 0
-        Data["IsMondialAuto2014"][which(as.character(Data$DateMonth) == "10" & as.character(Data$DateYear) == "2014" & as.numeric(Data$DateDay) <= 19 & as.numeric(Data$DateDay) >= 4),] = 1
-        
-        Data["IsOPO"] = 0
-        
-        
-          
-        for(i in c('2014-01-18'
-                    ,'2014-01-19'
-                    ,'2014-03-15'
-                    ,'2014-03-16'
-                    ,'2014-06-14'
-                    ,'2014-06-15'
-                    ,'2014-09-13'
-                    ,'2014-09-14'
-                    ,'2014-10-11'
-                    ,'2014-10-12'
-                    ,'2014-11-21'
-                    ,'2014-11-22'
-                    ,'2014-11-23'
-                    ,'2015-01-17'
-                    ,'2015-01-18'
-                    ,'2015-03-14'
-                    ,'2015-03-15'
-                    ,'2015-06-13'
-                    ,'2015-06-14')) {
-          Data["IsOPO"][which(Data$date == i),] = 1
-          
-        }
-           
-           
-      
-        
-        Data["IsPrimeAlaCasse"] = 0
-        Data["IsPrimeAlaCasse"][which(Data$date == '2014-12-30' | Data$date == '2015-04-02'),] = 1
-        
-        
-        holiday = unique(as.character(Data$SpecificationJour))
-        
-        for(i in holiday) {
-          if(i != "Jour Ordinaire") {
-            j = gsub(" ","",i)
-            j = gsub("'","",j)
-            j = paste("Is", j,sep = '')
-            Data[j] = 0
-            Data[j][which(as.character(Data$SpecificationJour) == i),] = 1
-          }
-        }
-        
-        
-        
-        
-        
+        startrow = which(apply(Data, MARGIN = 1, WhichRowHasNA))
+        Data = Data[-startrow,]
         Data_Tempo$data = Data
         
+       
+       
         
-      
+        #m=arimax(Data$ConfigStarted, order = c(2,0,0), xreg = as.data.frame(cbind(Data[,8],Data[,9],Data[,10],Data[,11],Data[,16],Data[,17],Data[,18],Data[,21],Data[,24],Data[,29],Data[,30])))
         return(Data)
       
     })
@@ -160,7 +106,7 @@ shinyServer(
     })
     
     
-    ## get its parameter if the model is confirmedn, the transformed data is stocked in 'Data_Tempo'
+    ## get its parameter if the model is confirmed, the transformed data is stocked in 'Data_Tempo'
     IsOK <- observeEvent(input$bOK, {
       param = NULL
       tryCatch({
@@ -177,10 +123,10 @@ shinyServer(
       }, error = function(e){param = c(param, NULL)})
       
       
-      Data = GetData()
       
-      x = Data$date
-      y = unname(unlist(Data[input$Transformations]))
+      
+      x = Data_Tempo$data$date
+      y = unname(unlist(Data_Tempo$data[input$Transformations]))
      
       y_t = Transform(input$Transformation_Type, y, as.numeric(param))$result
       
@@ -210,20 +156,22 @@ shinyServer(
       if (input$Extract == 0) {
         shinyjs::disable("bOK")
         shinyjs::disable("bReset")
+        shinyjs::disable("MemoOK")
+        shinyjs::disable("MemoReset")
+        shinyjs::disable("DisplayOK")
+        shinyjs::disable("DisplayReset")
+        shinyjs::disable("LagOK")
+        shinyjs::disable("LagReset")
+        
       } else {
         shinyjs::enable("bOK")
         shinyjs::enable("bReset")
-      }
-    })
-    
-    observe({
-      if (input$bOK == 0) {
-        shinyjs::disable("datedebut")
-        shinyjs::disable("datefin")
-      } else {
-        shinyjs::enable("datedebut")
-        shinyjs::enable("datefin")
-        
+        shinyjs::enable("MemoOK")
+        shinyjs::enable("MemoReset")
+        shinyjs::enable("DisplayOK")
+        shinyjs::enable("DisplayReset")
+        shinyjs::enable("LagOK")
+        shinyjs::enable("LagReset")
       }
     })
     
@@ -232,7 +180,7 @@ shinyServer(
     
     ## display the transformed data
     output$Transformation_PLOT <- renderChart2({
-      tryCatch({if(input$bOK == 0){
+      tryCatch({if(input$DisplayOK == 0){
         
         return(Highcharts$new())
       }
@@ -240,31 +188,30 @@ shinyServer(
         
         Data = GetData()
         
-        x = Data$date
+        x = Data$Date
         
-        y = unname(unlist(Data[input$Transformations]))
+        y = unname(unlist(Data[input$Display]))
         
-        y_t = unname(unlist(Data_Tempo$data[input$Transformations]))
+        y_t = unname(unlist(Data_Tempo$data[input$Display]))
         
 
         h = Highcharts$new()
         h$chart(zoomType = 'x')
-        h$title(text = "")
-        #h$set(height=400, width=1000)
+        h$title(text = input$Display)
+        h$set(height=600, width=1500)
         
         
         
-        h$xAxis(title = list(text = 'Date'), labels=list(enabled = TRUE, rotation = -45), type = 'datetime')
-        h$yAxis(title = list(text ='Value'))
+        h$xAxis(title = list(text = 'Date'), categories = x, labels=list(enabled = TRUE, rotation = -45))
+        h$yAxis(list(list(title = list(text ="Value before transfrom")), list(title = list(text = "Value after transform"), opposite = TRUE)))
         
         
         
         
         
-        
-        h$series(name = 'Value before transform',  data = unname(y), pointStart = as.numeric(x[1])*86400000, pointInterval=24 * 3600 * 1000)
-        h$series(name = 'Value after transform', color = '#F32525', data = unname(y_t),pointStart = as.numeric(x[1])*86400000, pointInterval=24 * 3600 * 1000)
-        h$exporting(enabled=T)
+        h$series(yAxis = 0, name = 'Value before transform',  data = unname(y))
+        h$series(yAxis = 1, name = 'Value after transform', color = '#F32525', data = unname(y_t))
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         h$tooltip(shared = TRUE)
         return(h)
       }
@@ -273,7 +220,7 @@ shinyServer(
     
     ## histo of the original data
     output$hist1 <- renderChart2({
-      tryCatch({if(input$bOK == 0){
+      tryCatch({if(input$DisplayOK == 0){
         
         return(Highcharts$new())
       }
@@ -282,15 +229,17 @@ shinyServer(
         
         x = Data$date
         
-        y = unname(unlist(Data[input$Transformations]))
+        y = unname(unlist(Data[input$Display]))
         
         
         
         
         histgramOld = Highcharts$new()
         histgramOld$chart(type = 'column')
-        histgramOld$title(text = input$Transformations)
-        #histgramOld$set(height = 300, width = 400)
+        histgramOld$title(text = input$Display)
+        histgramOld$set(height = 600, width = 1500)
+        #h$set(height=400, width=1000)
+        
         histgramOld$plotOptions(column = list(pointPadding=0,borderWidth=0,groupPadding=0,shadow=TRUE))
         histdata = hist(y, plot = FALSE)
         histgramOld$yAxis(list(list(title = list(text ="Counts")), list(title = list(text = "Normal distribution"), opposite = TRUE)))
@@ -301,7 +250,7 @@ shinyServer(
          
         
         histgramOld$series(yAxis=1, color = '#F32525', enableMouseTracking = FALSE, dashStyle = 'shortdot',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = dnorm(histdata$mids, mean = mean(y), sd = sd(y)))
-        histgramOld$exporting(enable=TRUE)
+        histgramOld$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(histgramOld)
       }
       },error = function(e) {return(Highcharts$new())})
@@ -311,7 +260,7 @@ shinyServer(
     
     ## histo of the transformed data
     output$hist2 <- renderChart2({
-      tryCatch({if(input$bOK == 0){
+      tryCatch({if(input$DisplayOK == 0){
         
         return(Highcharts$new())
       }
@@ -322,13 +271,14 @@ shinyServer(
           
           
           
-          y_t = unname(unlist(Data_Tempo$data[input$Transformations]))
+          y_t = unname(unlist(Data_Tempo$data[input$Display]))
           
           
           histgramNew = Highcharts$new()
           histgramNew$chart(type = 'column')
-          histgramNew$title(text = input$Transformations)
-          #histgramNew$set(height = 300, width = 400)
+          histgramNew$title(text = input$Display)
+          histgramNew$set(height = 600, width = 1500)
+          
           histgramNew$plotOptions(column = list(pointPadding=0,borderWidth=0,groupPadding=0,shadow=TRUE))
           histdata = hist(y_t, plot = FALSE)
           
@@ -336,7 +286,7 @@ shinyServer(
           histgramNew$xAxis(categories = histdata$mids)
           histgramNew$series(yAxis=0, name = 'data after transforme', data = histdata$counts)
           histgramNew$series(yAxis=1,color = '#F32525', enableMouseTracking = FALSE, dashStyle = 'shortdot',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = dnorm(histdata$mids, mean = mean(y_t), sd = sd(y_t)))
-          histgramNew$exporting(enable=TRUE)
+          histgramNew$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           return(histgramNew)
         }
       },error = function(e) {return(Highcharts$new())})
@@ -344,127 +294,77 @@ shinyServer(
     })
     
     
-    ## display the memorisation model
-    output$paramMemo <- renderUI({
-      
-      
-      
-      if(!is.null(GetData())) {
-        tryCatch({
-          if(input$Memorisation_Type %in% c("Linear")) {
-            list(h5("Linear: moving average"),
-                 textInput("ParamMemo1", label = "a0", value = 10))
-          }
-          else if(input$Memorisation_Type %in% c("LinearW")) {
-            list(h5("Linear: weighted moveing average"),
-                 textInput("ParamMemo1", label = "a0", value = 10))
-          }
-          else if(input$Memorisation_Type %in% c("Exponentiel")) {
-            
-            list(h5("Exponential smoothing: f(x) = x0*a0^(t)"),textInput("ParamMemo1", label = "a0", value = "0.5"))
-          }
-          else if(input$Memorisation_Type %in% c("Loess")) {
-            list(h5("Loess: span"), textInput("ParamMemo1", label = "span", value = "0.66"))
-          }
-        },error = function(e) {})}
-      
-    })
     
-    ## if the data is not extracted, then disable the button
-    observe({
-      if (input$Extract == 0) {
-        shinyjs::disable("MemoOK")
-        shinyjs::disable("MemoReset")
-      } else {
-        shinyjs::enable("MemoOK")
-        shinyjs::enable("MemoReset")
-      }
-    })
+
     
-    ## calculate the memory effect 
+    ## calculate the ADSTOCK
     IsMemoOK <- observeEvent(input$MemoOK, {
-      param = NULL
-      tryCatch({
-        param = c(param, input$ParamMemo1)
-      }, error = function(e){param = c(param, NULL)})
-      tryCatch({
-        param = c(param, input$ParamMemo2)
-      }, error = function(e){param = c(param, NULL)})
-      tryCatch({
-        param = c(param, input$ParamMemo3)
-      }, error = function(e){param = c(param, NULL)})
-      tryCatch({
-        param = c(param, input$ParamMemo4)
-      }, error = function(e){param = c(param, NULL)})
-  
-      Data = GetData()
       
-      x = Data$date
+      
+      param = input$ParamMemo1
+      Data = Data_Tempo$data
+      
+      x = Data$Date
       y = Data[input$Memorisation]
       
-      y_t = Memorisation(input$Memorisation_Type, y, as.numeric(param))
+      y_t = Memorisation(y, as.numeric(param))
       
       
-      name = paste(input$Memorisation,"Memo", sep = '')
-      Data_Tempo$data[name] = y_t
       
+      Data_Tempo$data[input$Memorisation] = y_t
       
     })
     
     
-    ## cancel the memory
+    ## cancel the ADSTOCK
     IsMemoReset <- observeEvent(input$MemoReset, {
 
-      string = paste(input$Memorisation, 'Memo', sep = '')
-      
-      Data_Tempo$data[string] = NULL
+      Data = GetData()
+      Data_Tempo$data[input$Memorisation] = Data[input$Memorisation]
       
     })
     
-    ## display the memory
-    output$Memorisation_PLOT <- renderChart2({
-      tryCatch({if(input$MemoOK == 0){
-        
-        return(Highcharts$new())
-      }
-        else{
-          
-          x = Data_Tempo$data$date
-          
-          y = unname(unlist(GetData()[input$Memorisation]))
-          
-          string = paste(input$Memorisation, "Memo", sep = '')
-          y_t = unname(unlist(Data_Tempo$data[string]))
-          
-          
-          h = Highcharts$new()
-          h$chart(zoomType = 'x')
-          h$title(text = "")
-          #h$set(height=400, width=1000)
-          
-          
-          
-          h$xAxis(title = list(text = 'Date'), labels=list(enabled = TRUE, rotation = -45), type = 'datetime')
-          h$yAxis(title = list(text ='Value'))
-          
-          
-          
-          
-          
-          
-          h$series(name = 'Real value',  data = unname(y), pointStart = as.numeric(x[1])*86400000, pointInterval=24 * 3600 * 1000)
-          h$series(name = 'value with lasting effect', color = '#F32525', data = unname(y_t),pointStart = as.numeric(x[1])*86400000, pointInterval=24 * 3600 * 1000)
-          h$exporting(enabled=T)
-          h$tooltip(shared = TRUE)
-          return(h)
-        }
-      },error = function(e) {return(Highcharts$new())})
+    ## calculate the Lag
+    IsLagOK <- observeEvent(input$LagOK, {
+      
+      
+      param = as.numeric(input$ParamLag)
+      Data = Data_Tempo$data
+      
+      x = Data$Date
+      y = unlist(Data[input$Lag])
+      
+      y_t = y
+      
+      y_t[1:param] = NA
+      y_t[(param+1):length(y)] = y[1:(length(y)-param)]
+      
+      
+     
+      Data_Tempo$data[input$Lag] = y_t
+      
+      
     })
+    
+    
+    ## cancel the Lag
+    IsLagReset <- observeEvent(input$LagReset, {
+      
+      Data = GetData()
+      Data_Tempo$data[input$Lag] = Data[input$Lag]
+      
+    })
+    
+    
+    
+    
+    
+    
     
     ## get all variable name of Data_Tempo
     varnumber <- reactive({
-      if(input$MemoOK != 0 || input$Extract != 0) {
-        name = names(Data_Tempo$data)
+      if(input$Extract != 0) {
+        name = names(GetData())
         return(name)
       }
     })
@@ -478,7 +378,7 @@ shinyServer(
       
       script = "choices = list("
       for(i in name) {
-        if(!(i %in% c("annonceur","modelevehicule","date","ConfigCompleted","ConfigStarted","UniqueVisitor","UtileVisitor","Nombre_inscription_S","Nombre_inscription_Non_S","Nombre_inscription"))) {
+        if(!(i %in% c("annonceur","modelevehicule","Date"))){##,"ConfigCompleted","ConfigStarted","UniqueVisitor","UtileVisitor","Nombre_inscription_S","Nombre_inscription_Non_S","Nombre_inscription"))) {
           script = paste(script,'"', i,'"', ",", sep = '')
         }
       }
@@ -488,14 +388,10 @@ shinyServer(
       checkboxGroupInput("var_explicative", 
                          label = h3(""), 
                          choices = choices, selected = c(                                   
-                                                                                     "TTC_Gazole"                                
-                                                                                    , "Impressions_BRANDING"  
-                                                                                    , "Impressions_ROI"                                 
-                                                                                                                       
-                                                                                                     
-                                                                                    , "INTERNET_DISPLAY_InvestissementsEnEuros" 
-                                                                                    , "PRESSE_InvestissementsEnEuros_QUOT_AUTO"        
-                                                                                    , "PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO"  
+                                                                                                                   
+                                                                                    
+                                                                                     "PRESSE_InvestissementsEnEuros_QUOT"        
+                                                                                    , "PRESSE_InvestissementsEnEuros_NON_QUOT"  
                                                                                  
                                                                                     , "RADIO_InvestissementsEnEuros"                   
                                                                                     , "TV_InvestissementsEnEuros"                    
@@ -524,10 +420,10 @@ shinyServer(
         script = paste(substr(script, 1, nchar(script) - 1), ')')
         eval(parse(text = script))
         
-        radioButtons("var_reponse", 
+        return(radioButtons("var_reponse", 
                            label = h3(""), 
-                           choices = choices, selected = choices[1])},error = function(e){})
-      
+                           choices = choices, selected = choices[1]))},error = function(e){})
+       
     })
     
     
@@ -536,7 +432,9 @@ shinyServer(
     output$ParamModel <- renderUI({
       if(input$Modele_Statistique == 'GLM') {
         list(h5("Generalized linear model"),
-             selectInput("Family", label = "family", choices = list('gaussian','Gamma','poisson','quasi'), selected = 'gaussian')
+             selectInput("Family", label = "family", choices = list('gaussian','Gamma','poisson','quasi'), selected = 'gaussian'),
+             selectInput("Criterion", label = "criterion", choices = list('AIC', 'BIC', 'NONE'), selected = 'NONE'),
+             selectInput("Stepwise", label = "stepwise", choices = list('forward', 'backward', 'both'), selected = 'both')
         )
       }
     })
@@ -552,8 +450,15 @@ shinyServer(
           )
         
           
-          Model = Stat_GLM(Data_Tempo$data, VarExplicativeInput(), VarReponseInput(), Famille = Famille, Intercept = TRUE, TypeSelect = 'forward', Critere = '')
           
+          
+          startrow = which(apply(Data_Tempo$data, MARGIN = 1, WhichRowHasNA))
+          if(length(startrow) > 0) {
+            Model = Stat_GLM(Data_Tempo$data[-(1:max(startrow)),], VarExplicativeInput(), VarReponseInput(), Famille = Famille, Intercept = TRUE, TypeSelect = input$Stepwise, Critere = input$Criterion)
+          }
+          else {
+            Model = Stat_GLM(Data_Tempo$data, VarExplicativeInput(), VarReponseInput(), Famille = Famille, Intercept = TRUE, TypeSelect = input$Stepwise, Critere = input$Criterion)
+          }
           return(Model)
        
     })
@@ -566,7 +471,7 @@ shinyServer(
       if(!is.null(AnalyseStatistique())) {
         
         h = Affichage_Ajuste(AnalyseStatistique())
-        h$exporting(enabled=T)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h)
       }
       
@@ -578,7 +483,7 @@ shinyServer(
       
       if(!is.null(AnalyseStatistique())) {
         h = Affichage_Proportion(AnalyseStatistique())
-        
+        h$h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h$h)
       }
       
@@ -589,7 +494,7 @@ shinyServer(
       
       if(!is.null(AnalyseStatistique())) {
         h = Affichage_Proportion(AnalyseStatistique())
-        
+        h$h1$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h$h1)
       }
       
@@ -628,9 +533,9 @@ shinyServer(
         
         
         # format the data values
-        data[, 1] = formatC( data[, 1], digits=3, format = "f")
-        data[, 2] = formatC( data[, 2], digits=3, format = "f")
-        data[, 3] = formatC( data[, 3], digits=3, format = "f")
+        data[, 1] = formatC( data[, 1], digits=5, format = "f")
+        data[, 2] = formatC( data[, 2], digits=5, format = "f")
+        data[, 3] = formatC( data[, 3], digits=5, format = "f")
         data[, 4] = ifelse( data[, 4] < 0.001, "< 0.001", formatC( data[, 4], digits=5, format = "f"))
         # add signif codes to data
         data$Signif = signif.codes
@@ -670,7 +575,7 @@ shinyServer(
       
       
       return(TableCorrData())
-    },options = list(searchable = FALSE,lengthMenu = c(15, 30, 50),  pageLength = 5, paging = FALSE, scrollY = 500, scrollX = 500))
+    },filter = 'top',options = list(searchable = TRUE,lengthMenu = c(15, 30, 50),  pageLength = 5, paging = FALSE, scrollY = 500, scrollX = 500))
     
     TableCorrData <- reactive({
       if(input$calculate != 0) {
@@ -734,7 +639,7 @@ shinyServer(
         Model = AnalyseStatistique()$model
         
         h_diag1 = Highcharts$new()
-        #h_diag1$set(height=500, width=700)
+        h_diag1$set(height=600, width=1500)
         h_diag1$chart(zoomType = 'xy')
         h_diag1$title(text = "Residual vs predicted y")
         
@@ -758,7 +663,7 @@ shinyServer(
         
         
         h_diag1$series(name = "Residual vs predicted y", type = 'scatter', data = combinelist)
-        h_diag1$exporting(enabled=T)
+        h_diag1$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h_diag1)
       }
     })
@@ -770,7 +675,7 @@ shinyServer(
       if(!is.null(AnalyseStatistique())) {
         Model = AnalyseStatistique()
         h_diag2 = Highcharts$new()
-        #h_diag2$set(height=500, width=700)
+        h_diag2$set(height=600, width=1500)
         h_diag2$chart(zoomType = 'xy')
         h_diag2$title(text = "Scale Location")
         
@@ -794,7 +699,7 @@ shinyServer(
         
         
         h_diag2$series(name = "Scale Location", type = 'scatter', data = combinelist)
-        h_diag2$exporting(enabled=T)
+        h_diag2$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h_diag2)
       }
     }) 
@@ -808,7 +713,7 @@ shinyServer(
         Model = Model[which(!is.na(Model)),]
        
         h_diag3 = Highcharts$new()
-        #h_diag3$set(height=500, width=700)
+        h_diag3$set(height=600, width=1500)
         h_diag3$chart(zoomType = 'xy')
         h_diag3$title(text = "Normal Q-Q")
         
@@ -839,7 +744,7 @@ shinyServer(
         h_diag3$series(name = "Actual value", type = 'scatter', data = combinelist)
         
         h_diag3$series(name = 'Theorical line', type = 'line', data = list(list(-3.5,-3.5), list(3.5,3.5)), marker = list(enabled = FALSE), enableMouseTracking = FALSE, dashStyle = 'shortdot')
-        h_diag3$exporting(enabled=T)
+        h_diag3$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h_diag3)
       }
     })
@@ -853,13 +758,13 @@ shinyServer(
         Model = AnalyseStatistique()
         
         h_diag4 = Highcharts$new()
-        #h_diag4$set(height=500, width=700)
+        h_diag4$set(height=600, width=1500)
         h_diag4$chart(zoomType = 'x')
         h_diag4$title(text = "residual vs date")
         
         
         
-        h_diag4$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+        h_diag4$xAxis(title = list(text = 'date'), categories = Model$input$Date,labels=list(enabled = TRUE, rotation = -45))
         h_diag4$yAxis(title = list(text ='Value'))
         
         
@@ -869,8 +774,8 @@ shinyServer(
         
         
         
-        h_diag4$series(name = 'Residual', data = unlist(unname(Model$residual)),pointStart = as.numeric(Model$input$date[1])*86400000, pointInterval=24 * 3600 * 1000)
-        h_diag4$exporting(enabled=T)
+        h_diag4$series(name = 'Residual', data = unlist(unname(Model$residual)))
+        h_diag4$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         
         return(h_diag4)
       }
@@ -881,7 +786,7 @@ shinyServer(
     output$data_table <- renderDataTable({
       Data_Tempo$data
       
-      },options = list(lengthMenu = c(15, 30, 50),  pageLength = 5, paging = FALSE, scrollY = 500, scrollX = 500))
+      },filter = 'top',options = list(lengthMenu = c(15, 30, 50),  pageLength = 5, paging = FALSE, scrollY = 500, scrollX = 500))
     
     output$downloadtable <- downloadHandler(
       filename = function() { paste('DataTable', '.csv', sep='') },
@@ -938,20 +843,20 @@ shinyServer(
       
       if(!is.null(ResiduValue$data)) {
         
-        date = Data_Tempo$data$date
+        date = AnalyseStatistique()$input$Date
         
         h = Highcharts$new()
-        #h$set(height=400, width=600)
+        h$set(height=600, width=1500)
         h$chart(zoomType = 'x')
         h$title(text = "residual")
         
         
         
-        h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+        h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
         h$yAxis(title = list(text ='Residual'))
 
-        h$series(name = 'Residual', data = unname(unlist(ResiduValue$data)), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#F32525')
-        h$exporting(enabled=T)
+        h$series(name = 'Residual', data = unname(unlist(ResiduValue$data)), color = '#F32525')
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         
         return(h)
       }
@@ -1071,20 +976,20 @@ shinyServer(
         if(EventTS() == 0) {
           data = ResiduApresTransformation$data
         
-          date = Data_Tempo$data$date
+          date = AnalyseStatistique()$input$Date
       
           h1 = Highcharts$new()
-          #h1$set(height=400, width=600)
+          h1$set(height=600, width=1500)
           h1$chart(zoomType = 'x')
           h1$title(text = "residual")
       
       
       
-          h1$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+          h1$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
           h1$yAxis(title = list(text ='Differentiated residual'))
       
-          h1$series(name = 'Residuals', data = data, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
-          h1$exporting(enabled=T)
+          h1$series(name = 'Residuals', data = data, color = '#1E61E6')
+          h1$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         
           
         
@@ -1093,19 +998,19 @@ shinyServer(
         else if(EventTS() == 3) {
           data = ResiduApresTransformation$data
           
-          date = Data_Tempo$data$date
+          date = AnalyseStatistique()$input$Date
           
           h1 = Highcharts$new()
-          #h1$set(height=400, width=600)
+          h1$set(height=600, width=1500)
           h1$chart(zoomType = 'x')
           h1$title(text = "Residual")
           
           
           
-          h1$xAxis(type = "datetime", title = list(text = 'Date'), labels=list(enabled = TRUE, rotation = -45))
+          h1$xAxis(title = list(text = 'Date'), categories=date, labels=list(enabled = TRUE, rotation = -45))
           h1$yAxis(title = list(text ='Differentiated residual'))
           
-          h1$series(name = 'Residual', data = data, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
+          h1$series(name = 'Residual', data = data, color = '#1E61E6')
           h1$exporting(enabled=T)
           
           
@@ -1144,7 +1049,7 @@ shinyServer(
           hacf$series(color = "#A5BFF2", enableMouseTracking = FALSE, dashStyle = 'shortdash',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = rep(-2/sqrt(length(data)), length(unlist(data_acf$acf))))
           
           
-          hacf$exporting(enabled=T)
+          hacf$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           
           
           
@@ -1161,7 +1066,7 @@ shinyServer(
           hacf = Highcharts$new()
           hacf$chart(type = 'column', zoomType = 'x')
           
-          #hacf$set(height=400, width=600)
+          hacf$set(height=600, width=1500)
           
           hacf$title(text = "The ACF plot for differentiated residual")
           hacf$plotOptions(column = list(pointPlacement = "on",  pointWidth = 0, pointPadding=0,borderWidth=0,groupPadding=1,shadow=FALSE))
@@ -1204,7 +1109,7 @@ shinyServer(
           hpacf = Highcharts$new()
           hpacf$chart(type = 'column', zoomType = 'x')
           
-          #hpacf$set(height=400, width=600)
+          hpacf$set(height=600, width=1500)
           
           hpacf$title(text = "The PACF plot for differentiated residual")
           hpacf$plotOptions(column = list(pointPlacement = "on",  pointWidth = 0, pointPadding=0,borderWidth=0,groupPadding=1,shadow=FALSE))
@@ -1220,7 +1125,7 @@ shinyServer(
           hpacf$series(color = "#A5BFF2", enableMouseTracking = FALSE, dashStyle = 'shortdash',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = rep(-2/sqrt(length(data)), length(unlist(data_pacf$acf))))
           
           
-          hpacf$exporting(enabled=T)
+          hpacf$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           
           
           
@@ -1237,7 +1142,7 @@ shinyServer(
           hpacf = Highcharts$new()
           hpacf$chart(type = 'column', zoomType = 'x')
           
-          #hpacf$set(height=400, width=600)
+          hpacf$set(height=600, width=1500)
           
           hpacf$title(text = "The PACF plot for differentiated residual")
           hpacf$plotOptions(column = list(pointPlacement = "on",  pointWidth = 0, pointPadding=0,borderWidth=0,groupPadding=1,shadow=FALSE))
@@ -1281,22 +1186,22 @@ shinyServer(
           modele = arima(ResiduValue$data, order = c(p,d,q))
           
           TS_Model_Table$data = modele
-          date = Data_Tempo$data$date
+          date = AnalyseStatistique()$input$Date
           
           
           h = Highcharts$new()
-          #h$set(height=400, width=600)
+          h$set(height=600, width=1500)
           h$chart(zoomType = 'x')
           h$title(text = "Residual")
           
         
           
-          h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+          h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
           h$yAxis(title = list(text ='Value'))
           
-          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
-          h$series(name = 'Predict value', data = as.numeric(modele$residuals), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#F81954')          
-          h$exporting(enabled=T)
+          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), color = '#1E61E6')
+          h$series(name = 'Predict value', data = unname(unlist(ResiduValue$data)) - as.numeric(modele$residuals), color = '#F81954')          
+          h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           return(h)
         }
         else if(EventTS() == 2) {
@@ -1305,22 +1210,22 @@ shinyServer(
           
           TS_Model_Table$data = modele
           
-          date = Data_Tempo$data$date
+          date = AnalyseStatistique()$input$Date
           
           
           h = Highcharts$new()
-          #h$set(height=400, width=600)
+          h$set(height=600, width=1500)
           h$chart(zoomType = 'x')
           h$title(text = "Residual")
           
           
           
-          h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+          h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
           h$yAxis(title = list(text ='Value'))
           
-          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
-          h$series(name = 'Predict value', data = as.numeric(modele$residuals), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#F81954')          
-          h$exporting(enabled=T)
+          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), color = '#1E61E6')
+          h$series(name = 'Predict value', data = unname(unlist(ResiduValue$data))-as.numeric(modele$residuals), color = '#F81954')          
+          h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           h$tooltip(shared = TRUE)
           return(h)
         }
@@ -1336,22 +1241,22 @@ shinyServer(
           modele = arima(ResiduValue$data, order = c(p,d,q), seasonal = list(order = c(P,D,Q), period = s))
           
           TS_Model_Table$data = modele
-          date = Data_Tempo$data$date
+          date = AnalyseStatistique()$input$Date
           
           
           h = Highcharts$new()
-          #h$set(height=400, width=600)
+          h$set(height=600, width=1500)
           h$chart(zoomType = 'x')
           h$title(text = "Residual")
           
           
           
-          h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+          h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
           h$yAxis(title = list(text ='Value'))
           
-          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
-          h$series(name = 'Predict value', data = as.numeric(modele$residuals), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#F81954')          
-          h$exporting(enabled=T)
+          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), color = '#1E61E6')
+          h$series(name = 'Predict value', data = unname(unlist(ResiduValue$data))-as.numeric(modele$residuals), color = '#F81954')          
+          h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           return(h)
         }
         else if(EventTS() == 5) {
@@ -1360,22 +1265,22 @@ shinyServer(
           
           TS_Model_Table$data = modele
           
-          date = Data_Tempo$data$date
+          date = AnalyseStatistique()$input$Date
           
           
           h = Highcharts$new()
-          #h$set(height=400, width=600)
+          h$set(height=600, width=1500)
           h$chart(zoomType = 'x')
           h$title(text = "Residual")
           
           
           
-          h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+          h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
           h$yAxis(title = list(text ='Value'))
           
-          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
-          h$series(name = 'Predict value', data = as.numeric(modele$residuals), pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#F81954')          
-          h$exporting(enabled=T)
+          h$series(name = 'Real value', data = unname(unlist(ResiduValue$data)), color = '#1E61E6')
+          h$series(name = 'Predict value', data = unname(unlist(ResiduValue$data))-as.numeric(modele$residuals), color = '#F81954')          
+          h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
           h$tooltip(shared = TRUE)
           return(h)
         }
@@ -1424,24 +1329,24 @@ shinyServer(
     output$ModeleTS_Residu <- renderChart2({
      
       if(!is.null(TS_Model_Table$data)) {
-        date = Data_Tempo$data$date
+        date = AnalyseStatistique()$input$Date
       
         data = TS_Model_Table$data
       
         h = Highcharts$new()
-        #h$set(height=400, width=600)
+        h$set(height=600, width=1500)
         h$chart(zoomType = 'x')
         h$title(text = "Residual")
       
       
       
-        h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+        h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
         h$yAxis(title = list(text ='Value'))
       
-        residu = as.numeric(unname(unlist(ResiduValue$data)) - unname(unlist(data$residuals)))
-        h$series(name = 'Residual', data = residu, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
+        residu = as.numeric(unname(unlist(data$residuals)))
+        h$series(name = 'Residual', data = residu, color = '#1E61E6')
       
-        h$exporting(enabled=T)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h)
       }
       else {
@@ -1451,24 +1356,24 @@ shinyServer(
     
     output$ModeleTS_Residu_Final <- renderChart2({
       if(!is.null(TS_Model_Table$data)) {
-        date = Data_Tempo$data$date
+        date = AnalyseStatistique()$input$Date
         
         data = TS_Model_Table$data
         
         h = Highcharts$new()
-        #h$set(height=400, width=600)
+        h$set(height=600, width=1500)
         h$chart(zoomType = 'x')
         h$title(text = "Residual")
         
         
         
-        h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+        h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
         h$yAxis(title = list(text ='Value'))
         
-        residu = as.numeric(unname(unlist(ResiduValue$data)) - unname(unlist(data$residuals)))
-        h$series(name = 'Residual', data = residu, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
+        residu = as.numeric(unname(unlist(data$residuals)))
+        h$series(name = 'Residual', data = residu, color = '#1E61E6')
         
-        h$exporting(enabled=T)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h)
       }
       else {
@@ -1479,13 +1384,13 @@ shinyServer(
     output$ModeleTS_Residu_ACF <- renderChart2({
       if(!is.null(TS_Model_Table$data)) {
         
-        data = unname(unlist(ResiduValue$data)) - TS_Model_Table$data$residuals
-        
+        #data = unname(unlist(ResiduValue$data)) - TS_Model_Table$data$residuals
+        data = TS_Model_Table$data$residuals
         data_acf = acf(data, plot = FALSE, lag.max = 50)
         hacf = Highcharts$new()
         hacf$chart(type = 'column', zoomType = 'x')
         
-        #hacf$set(height=400, width=600)
+        hacf$set(height=600, width=1500)
         
         hacf$title(text = "The ACF Plot of residual")
         hacf$plotOptions(column = list(pointPlacement = "on",  pointWidth = 0, pointPadding=0,borderWidth=0,groupPadding=1,shadow=FALSE))
@@ -1501,7 +1406,7 @@ shinyServer(
         hacf$series(color = "#A5BFF2", enableMouseTracking = FALSE, dashStyle = 'shortdash',marker = list(enabled = FALSE),type = 'spline', name = 'distribution normale', data = rep(-2/sqrt(length(data)), length(unlist(data_acf$acf))))
         
         
-        hacf$exporting(enabled=T)
+        hacf$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(hacf)
       }
       return(Highcharts$new())
@@ -1510,11 +1415,12 @@ shinyServer(
     output$ModeleTS_Residu_QQ <- renderChart2({
       if(!is.null(TS_Model_Table$data)) {
         
-        Model = unname(unlist(ResiduValue$data)) - TS_Model_Table$data$residuals
+        #Model = unname(unlist(ResiduValue$data)) - TS_Model_Table$data$residuals
+        Model = TS_Model_Table$data$residuals
         Model = Model/sd(Model)
         
         h = Highcharts$new()
-        #h$set(height=500, width=700)
+        h$set(height=600, width=1500)
         h$chart(zoomType = 'xy')
         h$title(text = "Normal Q-Q")
         
@@ -1545,7 +1451,7 @@ shinyServer(
         h$series(name = "Actual value", type = 'scatter', data = combinelist)
         
         h$series(name = 'Theorical line', type = 'line', data = list(list(-3.5,-3.5), list(3.5,3.5)), marker = list(enabled = FALSE), enableMouseTracking = FALSE, dashStyle = 'shortdot')
-        h$exporting(enabled=T)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h)
       }
       return(Highcharts$new())
@@ -1554,14 +1460,15 @@ shinyServer(
     output$ModeleTS_Residu_LjungBox <- renderChart2({
       if(!is.null(TS_Model_Table$data)) {
        
-        data = as.numeric(unname(unlist(ResiduValue$data) - TS_Model_Table$data$residuals))
+        #data = as.numeric(unname(unlist(ResiduValue$data) - TS_Model_Table$data$residuals))
+        data = as.numeric(unname(TS_Model_Table$data$residuals))
         pvalue = numeric(50)
         for(i in c(1:50)) {
           pvalue[i] = Box.test(data, lag = i)$p.value
         }
         
         h = Highcharts$new()
-        #h$set(height=500, width=700)
+        h$set(height=600, width=1500)
         h$chart(zoomType = 'x')
         h$title(text = "Ljung Box Test")
         h$xAxis(title = list(text = 'lag'), labels=list(enabled = TRUE, rotation = 0))
@@ -1585,7 +1492,7 @@ shinyServer(
         h$series(name = "Ljung Box Test Value", type = 'scatter', data = combinelist)
         
         h$series(name = 'Theorical line', type = 'line', data = list(list(0, 0.05), list(50, 0.05)), marker = list(enabled = FALSE), enableMouseTracking = FALSE, dashStyle = 'shortdot')
-        h$exporting(enabled=T)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h)
         
       }
@@ -1596,31 +1503,87 @@ shinyServer(
     output$Result_Final <- renderChart2({
       
       if(!is.null(TS_Model_Table$data)) {
-        
+      
         dataoriginial = unname(unlist(AnalyseStatistique()$reponse))
-        dataajuste = unname(unlist(AnalyseStatistique()$predict + as.numeric(TS_Model_Table$data$residuals)))
+        
+        dataajuste = unname(unlist(AnalyseStatistique()$predict)) + as.numeric(unname(unlist(ResiduValue$data) - TS_Model_Table$data$residuals))
         
         h = Highcharts$new()
         
-        date = Data_Tempo$data$date
-        #h$set(height=400, width=600)
+        date = AnalyseStatistique()$input$Date
+        h$set(height=600, width=1500)
         h$chart(zoomType = 'x')
         h$title(text = "Residual")
         
         
         
-        h$xAxis(type = "datetime", title = list(text = 'date'), labels=list(enabled = TRUE, rotation = -45))
+        h$xAxis(title = list(text = 'date'), categories = date, labels=list(enabled = TRUE, rotation = -45))
         h$yAxis(title = list(text ='Value'))
         
         
-        h$series(name = 'Real value', data = dataoriginial, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#1E61E6')
-        h$series(name = 'Predict value', data = dataajuste, pointStart = as.numeric(date[1])*86400000, pointInterval=24 * 3600 * 1000, color = '#F81942')
+        h$series(name = 'Real value', data = dataoriginial, color = '#1E61E6')
+        h$series(name = 'Predict value', data = dataajuste, color = '#F81942')
         
-        h$exporting(enabled=T)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
         return(h)
       }
       return(Highcharts$new())
     })
+    
+    output$Contribution_Final <- renderChart2({
+      if(!is.null(TS_Model_Table$data)) {
+        modele_regression = AnalyseStatistique()
+        
+        h = Highcharts$new()
+        h$set(height=600, width=1500)
+        
+        h$chart(options3d=list(enabled= TRUE, alpha= 45, beta= 0), type = 'pie')
+      
+       
+        h$title(text = 'Contribution of different part')
+        
+        
+        h$plotOptions(pie=list(allowPointSelect= TRUE,cursor= 'pointer',
+            dataLabels=list(
+              enabled= TRUE,
+              format= '<b>{point.name}</b>: {point.percentage:.1f} %'
+            
+            )
+        ))
+        
+        
+        
+        
+        script1 = paste("data1 = list(list(name='Baseline', y=", modele_regression$coeff[1,]*dim(modele_regression$explicative)[1],"),",sep = "")
+        script2 = "data2 = list("
+        allmedia = 0
+        for(i in names(modele_regression$explicative)) {
+            value = sum(unname(unlist(modele_regression$explicative[i])*modele_regression$coeff[which(names(modele_regression$explicative) == i)+1,]))
+            allmedia = allmedia + value
+            if(i != names(modele_regression$explicative)[length(names(modele_regression$explicative))]) {
+              script2 = paste(script2, "list(name='",i,"',y=",value,"),",sep="")
+            }
+            else {
+              script2 = paste(script2, "list(name='",i,"',y=",value,"))",sep="")
+            }
+        }
+        
+        script1 = paste(script1, "list(name='allmedia',y=", allmedia, "),",sep="")
+        script1 = paste(script1, "list(name='time series',y=",sum(as.numeric(unname(unlist(ResiduValue$data) - TS_Model_Table$data$residuals))), "),",sep="")
+        script1 = paste(script1, "list(name='UNKNOWN',y=", sum(as.numeric(TS_Model_Table$data$residuals)), "))",sep="")
+        
+        eval(parse(text = script1))
+        eval(parse(text =script2))
+        
+        h$series(size = 400, center= list(300, 300), name = "Contribution", colorByPoint=TRUE, data=data1)
+        h$series(size = 400, center= list(1000, 300), name = "Contribution1", colorByPoint=TRUE, data=data2)
+        h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
+        
+        return(h)
+      }
+      return(Highcharts$new())
+    })
+    
     
     output$PrecisionErrorFinal <- renderText({
       if(!is.null(TS_Model_Table$data)) {

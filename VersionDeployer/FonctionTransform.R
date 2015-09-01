@@ -32,25 +32,24 @@ Transform <- function(nom, data, parametre) {
   list(nom = nom, data = data, result = result)
 }
 
-Memorisation <- function(nom, data, parametre) {
-  if(nom == 'Loess') {
-    
-    glisse = lowess(unname(unlist(data)), f = parametre, iter = 20)$y
+Memorisation <- function(data, parametre) {
+ 
+  glisse = data[,1]
+  for(i in 2:length(glisse)) {
+    glisse[i] = glisse[i] + parametre*glisse[i-1]
   }
-  else if(nom == 'Linear') {
-    
-    glisse = filter(unname(unlist(data)), rep(1/parametre, parametre), method = "convolution", sides = 1)
-    glisse[is.na(glisse)] = unname(unlist(data))[is.na(glisse)]
-  }
-  else if(nom == 'LinearW') {
-    
-    glisse = filter(unname(unlist(data)), seq(1/parametre, 1, 1/parametre), method = "convolution", sides = 1)
-    glisse[is.na(glisse)] = unname(unlist(data))[is.na(glisse)]
-  }
+  
   
   return(glisse)
 }
 
+
+WhichRowHasNA <- function(rowdata) {
+  if(sum(is.na(unlist(rowdata))) >= 1)
+    return(TRUE)
+  else
+    return(FALSE) 
+}
 
 
 
