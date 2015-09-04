@@ -83,7 +83,7 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
       #SQuery = paste(SQuery, ", avg(a.INTERNET_DISPLAY_InvestissementsEnEuros_BMW) as INTERNET_DISPLAY_InvestissementsEnEuros_BMW") 
       
       SQuery = paste(SQuery, ", sum(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_BMW+a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_BMW+a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_BMW+a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_BMW)/19 as PRESSE_InvestissementsEnEuros_BMW, sum(a.RADIO_InvestissementsEnEuros_BMW)/19 as RADIO_InvestissementsEnEuros_BMW, sum(a.TV_NAT_InvestissementsEnEuros_BMW+a.TV_TNT_InvestissementsEnEuros_BMW)/19 as TV_InvestissementsEnEuros_BMW, sum(a.TV_NAT_GRP_BMW+a.TV_TNT_GRP_BMW)/19 as TV_GRP_BMW, sum(a.Investissement_Affichage_BMW)/19 as Investissement_Affichage_BMW")	
-      SQuery = paste(SQuery, ", sum(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_MERCEDES+a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_MERCEDES+a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_MERCEDES+a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_MERCEDES)/19 as PRESSE_InvestissementsEnEuros_MERCEDES, sum(a.RADIO_InvestissementsEnEuros_MERCEDES)/19 as RADIO_InvestissementsEnEuros_MERCEDES, sum(a.TV_NAT_InvestissementsEnEuros_MERCEDES+a.TV_TNT_InvestissementsEnEuros_MERCEDES)/19 as TV_InvestissementsEnEuros_MERCEDES, sum(a.TV_NAT_GRP_MERCEDES+a.TV_TNT_GRP_MERCEDES)/19 as TV_NAT_GRP_MERCEDES, sum(a.Investissement_Affichage_MERCEDES)/19 as Investissement_Affichage_MERCEDES")
+      SQuery = paste(SQuery, ", sum(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO_MERCEDES+a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO_MERCEDES+a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO_MERCEDES+a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO_MERCEDES)/19 as PRESSE_InvestissementsEnEuros_MERCEDES, sum(a.RADIO_InvestissementsEnEuros_MERCEDES)/19 as RADIO_InvestissementsEnEuros_MERCEDES, sum(a.TV_NAT_InvestissementsEnEuros_MERCEDES+a.TV_TNT_InvestissementsEnEuros_MERCEDES)/19 as TV_InvestissementsEnEuros_MERCEDES, sum(a.TV_NAT_GRP_MERCEDES+a.TV_TNT_GRP_MERCEDES)/19 as TV_GRP_MERCEDES, sum(a.Investissement_Affichage_MERCEDES)/19 as Investissement_Affichage_MERCEDES")
       SQuery = paste(SQuery, ", sum(IsMondialAuto2014)/19 as IsMondialAuto2014, sum(IsOPO)/19 as IsOPO, sum(IsPrimeAlaCasse)/19 as IsPrimeAlaCasse,sum(IsPentecote)/19 as IsPentecote, sum(Is08Mais)/19 as Is08Mais, sum(IsPacques)/19 as IsPacques,sum(Is11Novembre)/19 as Is11Novembre,sum(Is15aout)/19 as Is15aout,sum(IsAsscention)/19 as IsAsscention,sum(IspremierNovembre)/19 as IspremierNovembre,sum(IsNoel)/19 as IsNoel,sum(Is14Juillet)/19 as Is14Juillet,sum(IsJourdelan)/19 as IsJourdelan,sum(IsFetedutravail)/19 as IsFetedutravail")
       
       SQuery = paste(SQuery, ",sum(b.ConfigStarted)/19 as ConfigStarted, sum(b.ConfigCompleted)/19 as ConfigCompleted,sum(b.UniqueVisitor)/19 as UniqueVisitor, sum(b.UtileVisitor)/19 as UtileVisitor")
@@ -109,9 +109,9 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
       DataSet =  sqlQuery(CONNEXTION, paste(SQuery))
       
       
-    }}
+    }
       
-    #write.csv(DataSet, file = "Data_Audi.csv")
+    write.csv(DataSet, file = "Data_Audi.csv")}
   
   
   DataSet = read.csv("Data_Audi.csv")
@@ -255,7 +255,9 @@ Affichage_Ajuste <- function(Model) {
   return(h)
   
 }
-
+s<-function() {
+  return(1)
+}
 
 ## plot contribution des medias
 Affichage_Proportion <- function(Model) {
@@ -330,6 +332,19 @@ Affichage_Proportion <- function(Model) {
   
   list(h=h, h1=h1)
 } 
+
+## plot contribution des medias
+Affichage_Proportion_PCA <- function() {
+  
+  OriginVariable = VarExplicativeInputPCA()
+  ChosenPCA = VarInputPCA()
+  PCAModel = Data_PCA$data$PCA
+  Coefficient = PCA_Regression_Model$data$coefficients
+  
+  
+    
+} 
+
 
 
 

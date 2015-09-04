@@ -214,7 +214,22 @@ shinyUI(
                           ))
                  
                  
-                 )),
+                 ),
+                 fluidRow(
+                   column(12,
+                          selectInput("MoreFunction", 
+                                      label = "Choose what you want to implement",
+                                      choices = list("Rien pour l'instant"),width = '100%'),
+                          fluidRow(
+                            column(6,
+                                   actionButton("FunctionOK", label = "OK"))
+                            
+                          ))
+                   
+                   
+                 )
+                 
+                 ),
           
             column(9,
                    fluidRow(column(12,
@@ -229,7 +244,7 @@ shinyUI(
         
     
     
-    tabPanel("Modelisation",
+    tabPanel("Regression Modelisation",
       fluidPage(
         fluidRow(
           column(3,
@@ -255,7 +270,8 @@ shinyUI(
                                   ),
                                   fluidRow(
                                   column(2,
-                                         actionButton("calculate", label = "OK"))))))))))),
+                                         actionButton("calculate", label = "OK"),
+                                         actionButton("CalculatePCA", label = "PCA_OK"))))))))))),
           column(9,tabsetPanel(tabPanel("Fitting result", showOutput("resultchart", "highcharts")),
                                 tabPanel("Media contributions", 
                                          fluidRow(
@@ -296,10 +312,59 @@ shinyUI(
                                 
                                 
           ))),
+    
+    
+    tabPanel("Regression Modelisation with PCA",
+             fluidPage(
+               fluidRow(
+                showOutput("PCA_Proportion", "highcharts")
+               ),
+               fluidRow(
+                 column(2,
+                        uiOutput("PCA_VariableGenere"),
+                        actionButton("PCA_RegressionOK", "OK")
+                        ),
+                 column(10,
+                        tabsetPanel(tabPanel("Fitting result", showOutput("PCA_Regression_Result", "highcharts")),
+                                    tabPanel("Media contributions", 
+                                             fluidRow(
+                                               column(12,
+                                                      showOutput("PCA_proportionchart", "highcharts"))),
+                                             fluidRow(
+                                               column(12,
+                                                      showOutput("PCA_proportionchartParDate", "highcharts")))
+                                    ),
+                                    
+                                    tabPanel("Summary",
+                                             fluidRow(
+                                               column(12,
+                                                      htmlOutput("PrecisionError_PCA_Regression"),
+                                                      uiOutput('download_tableCoef_PCA_Regression'),
+                                                      fluidRow(column(8,
+                                                                      DT::dataTableOutput("summary_table_PCA_Regression")))
+                                                      ))),
+                                    
+                                    tabPanel("Regression Diagnostics" , 
+                                             fluidRow(
+                                               column(12, showOutput("Diagnostic1_PCA_Regression", "highcharts"))),
+                                             fluidRow(
+                                               column(12,  showOutput("Diagnostic2_PCA_Regression", "highcharts"))),
+                                             
+                                             fluidRow(  
+                                               column(12,
+                                                      showOutput("Diagnostic4_PCA_Regression", "highcharts"))),
+                                             fluidRow(
+                                               column(12, showOutput("Diagnostic3_PCA_Regression","highcharts"))))
+                                    
+                                    ))
+               )
+             )
+    ),
           
         
  
     tabPanel("Time series modeling for residual",
+             
              fluidPage(
                
                 
@@ -358,6 +423,7 @@ shinyUI(
                                                 column(12, showOutput("ModeleTS_Residu_LjungBox", "highcharts"))
                                               )),
                   tabPanel("Final residual",
+                           tags$head(includeScript(system.file('www', 'pie3d.js'))),
                            htmlOutput("PrecisionErrorFinal"),
                             fluidRow(
                                column(12, showOutput("Result_Final", "highcharts"))),
