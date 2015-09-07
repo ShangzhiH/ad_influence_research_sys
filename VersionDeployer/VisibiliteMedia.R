@@ -6,7 +6,7 @@ library(rCharts)
 library(DT)
 #library(shinyapps)
 library(forecast)
-#library(RODBC)
+library(RODBC)
 library(shiny)
 library(shinyjs)
 library(tsoutliers)
@@ -70,7 +70,7 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
     }
     else if(ModeleVehicule == 'TOTAL') {
      
-      SQuery = "SELECT a.annonceur,(CAST(a.DateYear AS varchar(20)) +'-'+CAST(a.semaine as VARCHAR(20))) as Date, a.DateYear,a.semaine,a.TTC_Gazole, sum(a.Impressions_BRANDING)/19 as Impressions_BRANDING, sum(a.Impressions_ROI)/19 as Impressions_ROI, sum(a.Clicks_BRANDING)/19 as Clicks_BRANDING,sum(a.Clicks_ROI)/19 as Clicks_ROI,sum(a.Budget_Depense_NON_Cappe_BRANDING)/19 as Budget_Depense_NON_Cappe_BRANDING,sum(a.Budget_Depense_NON_Cappe_ROI)/19 as Budget_Depense_NON_Cappe_ROI"
+      SQuery = "SELECT a.annonceur,(CAST(a.DateYear AS varchar(20)) +'-'+CAST(a.semaine as VARCHAR(20))) as Date, a.DateYear,a.semaine,a.TTC_Gazole, sum(a.Impressions_BRANDING)/19 as Impressions_BRANDING, sum(a.Impressions_ROI)/19 as Impressions_ROI,(sum(a.Impressions_BRANDING)/19+sum(a.Impressions_ROI)/19) as Impressions, sum(a.Clicks_BRANDING)/19 as Clicks_BRANDING,sum(a.Clicks_ROI)/19 as Clicks_ROI,(sum(a.Clicks_BRANDING)/19+sum(a.Clicks_ROI)/19) as Clicks, sum(a.Budget_Depense_NON_Cappe_BRANDING)/19 as Budget_Depense_NON_Cappe_BRANDING,sum(a.Budget_Depense_NON_Cappe_ROI)/19 as Budget_Depense_NON_Cappe_ROI, (sum(a.Budget_Depense_NON_Cappe_BRANDING)/19+sum(a.Budget_Depense_NON_Cappe_ROI)/19) as Budget_Depense_NON_Cappe"
       SQuery = paste(SQuery, ",sum(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO+a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO) as PRESSE_InvestissementsEnEuros_QUOT,sum(a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO+a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO) as PRESSE_InvestissementsEnEuros_NON_QUOT,sum(a.PRESSE_InvestissementsEnEuros_QUOT_AUTO+a.PRESSE_InvestissementsEnEuros_QUOT_NON_AUTO+a.PRESSE_InvestissementsEnEuros_NON_QUOT_AUTO+a.PRESSE_InvestissementsEnEuros_NON_QUOT_NON_AUTO) as PRESSE_InvestissementsEnEuros, sum(a.RADIO_InvestissementsEnEuros) as RADIO_InvestissementsEnEuros")
       #SQuery = paste(SQuery, ",sum(a.TV_NAT_InvestissementsEnEuros) as TV_NAT_InvestissementsEnEuros, sum(a.TV_TNT_InvestissementsEnEuros) as TV_TNT_InvestissementsEnEuros")
       SQuery = paste(SQuery, ",sum(a.TV_NAT_InvestissementsEnEuros + a.TV_TNT_InvestissementsEnEuros) AS TV_InvestissementsEnEuros")
@@ -100,8 +100,8 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
       
       Where = paste("WHERE annonceur = '", AdvertiserName, "'",sep = '') 
       
-      Where = paste(Where, "AND ((DateYear = 2014 AND semaine >= 6) OR (DateYear = 2015 AND semaine <= 21))", sep = '')
-      
+      #Where = paste(Where, "AND ((DateYear = 2014 AND semaine >= 6) OR (DateYear = 2015 AND semaine <= 21))", sep = '')
+      Where = paste(Where, "AND (DateYear = 2014 AND semaine <= 50)", sep = '')
       SQuery = paste(SQuery, Where,GroupBy, OrderBy,  sep = ' ')
       
       
@@ -110,10 +110,13 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
       
       
     }
-      
-    write.csv(DataSet, file = "Data_Audi.csv")}
+     
+    #write.csv(DataSet, file = "Data_Audi_For_Inscription.csv") 
+    #write.csv(DataSet, file = "Data_Audi.csv")
+    }
   
   
+  #DataSet = read.csv("Data_Audi_For_Inscription.csv")
   DataSet = read.csv("Data_Audi.csv")
   DataSet = DataSet[,-1]
   

@@ -22,6 +22,7 @@ Transform <- function(nom, data, parametre) {
     result = parametre[1] + parametre[2]/(data + parametre[3])
   }
   else if(nom == 'Dimishing') {
+    
     result = parametre[1] + parametre[2]*(1-exp(-data/parametre[3]))
   }
   else {

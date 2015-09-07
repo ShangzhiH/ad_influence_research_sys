@@ -28,8 +28,8 @@ output$VariableGenere <- renderUI({
                        choices = choices, selected = c(                                   
                          
                          
-                         "PRESSE_InvestissementsEnEuros_QUOT"        
-                         , "PRESSE_InvestissementsEnEuros_NON_QUOT"  
+                         "PRESSE_InvestissementsEnEuros"        
+                         
                          
                          , "RADIO_InvestissementsEnEuros"                   
                          , "TV_InvestissementsEnEuros"                    

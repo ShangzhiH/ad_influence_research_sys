@@ -249,7 +249,7 @@ output$Contribution_Final <- renderChart2({
     eval(parse(text =script2))
     
     h$series(size = 400, center= list(300, 300), name = "Contribution", colorByPoint=TRUE, data=data1)
-    h$series(size = 400, center= list(1000, 300), name = "Contribution1", colorByPoint=TRUE, data=data2)
+    h$series(size = 400, center= list(900, 300), name = "Contribution1", colorByPoint=TRUE, data=data2)
     h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
     
     return(h)
