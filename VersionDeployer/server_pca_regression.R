@@ -26,7 +26,7 @@ AnalysePCA <- observeEvent(input$CalculatePCA, {
   data2 = Data_Tempo$data[VarReponseInputPCA()]
   
   
-  Data_PCA$data$PCA = prcomp(x = data1)
+  Data_PCA$data$PCA = prcomp(x = data1, center = FALSE, scale = FALSE)
   Data_PCA$data$RegressionData = cbind(Data_PCA$data$PCA$x, data2)
   
   
@@ -78,6 +78,7 @@ observeEvent(input$PCA_RegressionOK, {
   
   PCA_Regression_Model$data = glm(as.formula(paste(AllNames[length(AllNames)],'~', paste(AllNames[as.numeric(var)], collapse = '+'))), data = Data_PCA$data$RegressionData)
   
+  PCA_Regression_Model$data = step(PCA_Regression_Model$data, direction = "both", steps = 2000)
 
   
   
@@ -113,6 +114,116 @@ output$PCA_Regression_Result <- renderChart2({
   }
   return(Highcharts$new())
 })
+
+
+## PCA regression, daily contribution of different media
+output$PCA_proportionchart <- renderChart2({
+  
+  if(!is.null(PCA_Regression_Model$data)) {
+    
+    ## the original independant variable 
+    OriginVariable = VarExplicativeInputPCA()
+    
+    
+    ## composant which we choose(1,2,3...) 
+    ChosenPCA = VarInputPCA()
+    
+    
+    ## PCA model, PCAModel$sdev - diagonal standard deviance
+    ## PCAModel$x - transformed data, PCAModel$rotation - Matrix,columns contain the eigenvectors
+    PCAModel = Data_PCA$data$PCA
+    
+    
+    ## data
+    #for(i in OriginVariable) {
+    #  if(exists("Data")) {
+    #    Data = cbind(Data, Data_Tempo$data[i])
+    #  }
+    #  else {
+    #    Data = Data_Tempo$data[i]
+    #  }
+    #}
+    
+    ## Data
+    Data = PCAModel$x %*% solve(PCAModel$rotation)
+    
+    colnames(x=Data) = OriginVariable
+    
+    
+    
+    
+    
+    
+    
+    
+    rownames(PCAModel$rotation) = OriginVariable
+    
+    ## regression model coefficients
+    Coefficient = PCA_Regression_Model$data$coefficients
+    
+    
+    Matrix = PCAModel$rotation[, as.numeric(ChosenPCA)]
+    
+    CoefficientWithoutIntercept = Coefficient[-1]
+    for(i in c(1:length(ChosenPCA))) {
+      ChosenPCA[i] = paste("PC", ChosenPCA[i],sep="")
+    }
+    for(i in ChosenPCA) {
+      if(i %in% names(CoefficientWithoutIntercept)) {
+        
+        Matrix[,i] = Matrix[,i]*CoefficientWithoutIntercept[i]
+      }
+      else {
+        
+        Matrix[,i] = 0
+      }
+    }
+    
+    for(j in OriginVariable) {
+      if(exists("Contributions")) {
+        Contributions = cbind(Contributions, apply(unlist(Data[,j])%*%t(Matrix[j,]), MARGIN = 1, FUN = sum))
+      }
+      else {
+        
+        Contributions = apply(unlist(Data[,j])%*%t(Matrix[j,]), MARGIN = 1, FUN = sum)
+
+      }
+    }
+    colnames(Contributions) = OriginVariable
+    
+    h = Highcharts$new()
+    h$chart(type = 'area', zoomType = 'x')
+    h$plotOptions(area = list(stacking = 'percent',lineColor = '#ffffff', lineWidth = 2, marker = list(lineWidth = 1, lineColor = '#ffffff')))
+    
+    h$tooltip(pointFormat = '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>', shared = TRUE)
+    
+    h$title(text = "Daily Media contribution")
+    h$set(height=600, width=1500)
+    
+    
+    h$xAxis(title = list(text = "Date"),labels=list(enabled = TRUE, rotation = -45), categories = as.character(unname(unlist(Data_Tempo$data$Date))))
+    h$yAxis(list(list(title = list(text ="Contribution value")), list(title = list(text = "SUM"), opposite = TRUE)))
+    
+    for(i in OriginVariable) {
+      
+      h$series(yAxis = 0, name = i, data = unname(unlist(Contributions[,i])))
+    }
+    
+    
+    h$series(yAxis = 0, name = "Intercept", data = unname(rep(Coefficient[1], dim(Contributions)[1])))
+    
+    
+    h$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
+    
+    ResiduValue$data$Contributions = cbind(unname(rep(Coefficient[1], dim(Contributions)[1])),Contributions)
+    #colnames(ResiduValue$data$Contributions) = c("Intercept",colnames(Contributions))
+    
+    return(h)
+  }
+  return(Highcharts$new())
+})
+
+
 
 
 

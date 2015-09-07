@@ -329,10 +329,10 @@ shinyUI(
                                     tabPanel("Media contributions", 
                                              fluidRow(
                                                column(12,
-                                                      showOutput("PCA_proportionchart", "highcharts"))),
-                                             fluidRow(
-                                               column(12,
-                                                      showOutput("PCA_proportionchartParDate", "highcharts")))
+                                                      showOutput("PCA_proportionchart", "highcharts")))
+                                             #fluidRow(
+                                            #   column(12,
+                                             #         showOutput("PCA_proportionchartParDate", "highcharts")))
                                     ),
                                     
                                     tabPanel("Summary",

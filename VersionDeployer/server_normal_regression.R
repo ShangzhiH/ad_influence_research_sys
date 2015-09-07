@@ -158,6 +158,8 @@ output$proportionchartParDate <- renderChart2({
   if(!is.null(Normal_Regression_Model$data)) {
     h = Affichage_Proportion(Normal_Regression_Model$data)
     h$h1$exporting(sourceWidth = 1500, sourceHeight = 600, scale = 15, enabled=T)
+      
+    ResiduValue$data$Contributions = h$Contributions
     return(h$h1)
   }
   return(Highcharts$new())

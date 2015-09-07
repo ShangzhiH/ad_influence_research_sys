@@ -6,12 +6,12 @@ library(rCharts)
 library(DT)
 #library(shinyapps)
 library(forecast)
-library(RODBC)
+#library(RODBC)
 library(shiny)
 library(shinyjs)
 library(tsoutliers)
 
-## récupérer les données de la base de données
+## r?cup?rer les donn?es de la base de donn?es
 GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet_Final')
                               ,AdvertiserName = 'Audi', ModeleVehicule = 'TOTAL', YearBegin = '2014', YearEnd = '2015') {
   
@@ -123,7 +123,7 @@ GET_DATA_FROM_BBD <- function(TableName = c('Table_Complet_Modele','Audi_Complet
 
 
 
-## Analyse de régression
+## Analyse de r?gression
 Stat_GLM <- function(DataSet, Explicatives, Reponses, Famille = gaussian(), Intercept = TRUE, TypeSelect = 'forward', Critere = 'AIC') {
   
   #ahistgrm = NULL
@@ -280,7 +280,7 @@ Affichage_Proportion <- function(Model) {
   
   h1$tooltip(pointFormat = '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.1f}</b><br/>', shared = TRUE)
   
-  h1$title(text = "Media contribution for everyday")
+  h1$title(text = "Daily Media contribution")
   h1$set(height=600, width=1500)
   
   
@@ -316,12 +316,18 @@ Affichage_Proportion <- function(Model) {
     intercept = 0
   }
   
+  Contributions = rep(Model$coeff[1,], length(x))
   for(i in names(Model$explicative)) {
     if(!(i %in% namelist)) {
       h$series(name = i, data = unname(unlist(Model$explicative[i])*Model$coeff[which(names(Model$explicative) == i)+intercept,])[order(Model$predict[,1])])
       h1$series(yAxis = 0, name = i, data = unname(unlist(Model$explicative[i])*Model$coeff[which(names(Model$explicative) == i)+intercept,]))
+      
+      Contributions = cbind(Contributions, unname(unlist(Model$explicative[i])*Model$coeff[which(names(Model$explicative) == i)+intercept,]))
+      
+      
     }
   }
+  colnames(Contributions) = c("Intercept", names(Model$explicative))
   
   
   #h1$series(yAxis = 1, name = names(Model$reponse), data = unname(unlist(Model$predict)))
@@ -330,20 +336,10 @@ Affichage_Proportion <- function(Model) {
   h$exporting(sourceWidth = 1500, sourceHeight = 600, enabled=T)
   h1$exporting(sourceWidth = 1500, sourceHeight = 600, enabled=T)
   
-  list(h=h, h1=h1)
+  list(h=h, h1=h1, Contributions = Contributions)
 } 
 
-## plot contribution des medias
-Affichage_Proportion_PCA <- function() {
-  
-  OriginVariable = VarExplicativeInputPCA()
-  ChosenPCA = VarInputPCA()
-  PCAModel = Data_PCA$data$PCA
-  Coefficient = PCA_Regression_Model$data$coefficients
-  
-  
-    
-} 
+
 
 
 
@@ -351,11 +347,11 @@ Affichage_Proportion_PCA <- function() {
 
 DEMO <- function(Tendance = FALSE) {
   
-  ## Données
+  ## Donn?es
   Data_Stat = GET_DATA_FROM_BBD(TableName = c('Table_Complet','Audi_Complet_Final')
                                 ,AdvertiserName = 'Audi', YearBegin = '2014', YearEnd = '2015')
   name = names(Data_Stat)
-  ## Matrice de corrélation
+  ## Matrice de corr?lation
   Corr = cor(Data_Stat[,c(-1,-2,-3,-4,-5)])
   Corr
   plot(Data_Stat[,c(-1,-2,-3,-4,-5)])

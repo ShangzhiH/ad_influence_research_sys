@@ -26,7 +26,7 @@ output$ResiduSuccess <- renderText({
 output$Residu <- renderChart2({
   
   if(!is.null(ResiduValue$data) && input$GetResidu != 0) {
-    browser()
+    
     date = ResiduValue$data$date
     
     h = Highcharts$new()

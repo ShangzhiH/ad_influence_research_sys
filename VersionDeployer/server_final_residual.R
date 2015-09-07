@@ -194,7 +194,9 @@ output$ModeleTS_Residu_Final <- renderChart2({
 ## pie chart contribution
 output$Contribution_Final <- renderChart2({
   if(!is.null(TS_Model_Table$data)) {
-    modele_regression = AnalyseStatistique()
+    Contributions = ResiduValue$data$Contributions
+    
+    
     
     h = Highcharts$new()
     h$set(height=600, width=1500)
@@ -216,22 +218,31 @@ output$Contribution_Final <- renderChart2({
     
     
     
-    script1 = paste("data1 = list(list(name='Baseline', y=", abs(modele_regression$coeff[1,]*dim(modele_regression$explicative)[1]),"),",sep = "")
+    script1 = paste("data1 = list(list(name='Baseline', y=", abs(sum(Contributions[,1])),"),",sep = "")
     script2 = "data2 = list("
     allmedia = 0
-    for(i in names(modele_regression$explicative)) {
-      value = sum(unname(unlist(modele_regression$explicative[i])*modele_regression$coeff[which(names(modele_regression$explicative) == i)+1,]))
+    
+    for(i in c(2:dim(Contributions)[2])) {
+      value = sum(Contributions[,i])
       allmedia = allmedia + value
-      if(i != names(modele_regression$explicative)[length(names(modele_regression$explicative))]) {
-        script2 = paste(script2, "list(name='",i,"',y=",abs(value),"),",sep="")
+      if(value<0) {
+        name = paste(colnames(Contributions)[i],"(-)",sep="")
       }
       else {
-        script2 = paste(script2, "list(name='",i,"',y=",abs(value),"))",sep="")
+        name = paste(colnames(Contributions)[i],"(+)",sep="")
+      }
+      
+      if(i != dim(Contributions)[2]) {
+        
+        script2 = paste(script2, "list(name='",name,"',y=",abs(value),"),",sep="")
+      }
+      else {
+        script2 = paste(script2, "list(name='",name,"',y=",abs(value),"))",sep="")
       }
     }
     
     script1 = paste(script1, "list(name='allmedia',y=", abs(allmedia), "),",sep="")
-    script1 = paste(script1, "list(name='time series',y=",abs(sum(as.numeric(unname(unlist(ResiduValue$data) - TS_Model_Table$data$residuals)))), "),",sep="")
+    script1 = paste(script1, "list(name='time series',y=",abs(sum(as.numeric(unname(unlist(ResiduValue$data$residual) - TS_Model_Table$data$residuals)))), "),",sep="")
     script1 = paste(script1, "list(name='UNKNOWN',y=", abs(sum(as.numeric(TS_Model_Table$data$residuals))), "))",sep="")
     
     eval(parse(text = script1))
